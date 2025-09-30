@@ -2,6 +2,8 @@
 # Lifespan - Actuarial mapping Strain means as well as individual level data mapping
 # 3 Month steps (~ 100 days) hit the bodyweight timepoints
 # AgeAtSetUp.in.colony..days. = Day at which the diet switch occured (HFD, as well as NAM), CD didn't switch they ate chow
+library(lme4)
+
 setwd("C:/Github/BxDLifespan/")
 ldata <- read.table("data/BxD_Lifespan.txt", sep = "\t", header = TRUE, row.names=2)
 bdata <- read.table("data/BxD_Bodyweights.txt", sep = "\t", header = TRUE)
@@ -34,6 +36,7 @@ geno <- geno[, -c(1:4)]
 rownames(geno) <- map[,2]
 rownames(map) <- map[,2]
 
+### Mapping Strain means
 op <- par(mfrow = c(2,1))
 for(diet in c("CD", "HF")){
   isCD <- ldata[which(ldata[, "Diet"] == diet),]
@@ -45,7 +48,6 @@ for(diet in c("CD", "HF")){
   strainM <- round(unlist(lapply(bxds, function(x){ mean(isCD[which(isCD[, "StrainName"] == x), "AgeAtDeath..days."]); })), 0)
   names(strainM) <- bxds
 
-  ### Mapping Strain means
   genoS <- geno[,names(strainM)]
 
   pvals <- c()
@@ -58,7 +60,6 @@ for(diet in c("CD", "HF")){
   plot(-log10(pvals), col = as.numeric(as.factor(map[, "Chr"])))
 }
 
-library(lme4)
 ### individual Level mapping (Random effect)
 op <- par(mfrow = c(2,1))
 for(diet in c("CD", "HF")){
