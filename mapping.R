@@ -4,7 +4,7 @@
 # AgeAtSetUp.in.colony..days. = Day at which the diet switch occured (HFD, as well as NAM), CD didn't switch they ate chow
 library(lme4)
 
-setwd("C:/Github/BxDLifespan/")
+#setwd("C:/Github/BxDLifespan/")
 ldata <- read.table("data/BxD_Lifespan.txt", sep = "\t", header = TRUE, row.names=2)
 bdata <- read.table("data/BxD_Bodyweights.txt", sep = "\t", header = TRUE)
 
@@ -60,7 +60,28 @@ for(diet in c("CD", "HF")){
   plot(-log10(pvals), col = as.numeric(as.factor(map[, "Chr"])))
 }
 
-### individual Level mapping (Random effect)
+### individual Level mapping (Wrong: Doesn't deal with correlation structure, as such effects are overestimated due to DoF error)
+op <- par(mfrow = c(2,1))
+for(diet in c("CD", "HF")){
+  isCD <- ldata[which(ldata[, "Diet"] == diet & grepl("BXD", ldata[, "StrainName"])),]
+  isCD <- isCD[which(isCD[, "StrainName"] %in% colnames(geno)),]
+  genoS <- geno[, isCD[, "StrainName"]]
+
+  wF <- 1 / table(isCD[, "StrainName"])
+  weights <- unlist(lapply(isCD[, "StrainName"], function(x){wF[x]}))
+
+
+  pvals <- c()
+  for(x in c(1:nrow(geno))) {
+    gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
+    pvals <- c(pvals, anova(lm(isCD[, "AgeAtDeath..days."] ~ gts, weights = weights))[[5]][1])
+    if(x %% 1000 == 1) cat(x, "\n")
+  }
+  write.table(cbind(map, -log10(pvals)), file = paste0(diet, "_indWeighted_wrong.txt"), sep = "\t", quote = FALSE)
+  plot(-log10(pvals), col = as.numeric(as.factor(map[, "Chr"])))
+}
+
+### individual Level mapping (Correct: Random effects used to deal with correlation structure)
 op <- par(mfrow = c(2,1))
 for(diet in c("CD", "HF")){
   isCD <- ldata[which(ldata[, "Diet"] == diet & grepl("BXD", ldata[, "StrainName"])),]
@@ -83,7 +104,7 @@ for(diet in c("CD", "HF")){
     }
     if(x %% 100 == 1) cat(x, "\n")
   }
-  write.table(cbind(map, -log10(pvals)), file = paste0(diet, "_indWeighted.txt"), sep = "\t", quote = FALSE)
+  write.table(cbind(map, -log10(pvals)), file = paste0(diet, "_indWeighted_lmer.txt"), sep = "\t", quote = FALSE)
   plot(-log10(pvals), col = as.numeric(as.factor(map[, "Chr"])))
 }
 
