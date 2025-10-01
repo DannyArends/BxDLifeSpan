@@ -25,8 +25,12 @@ bdata <- bdata[which(rownames(bdata) %in% rownames(ldata)),]
 ldata <- ldata[which(rownames(ldata) %in% rownames(bdata)),]
 
 ### Sort based on the order in lifespan
-
 bdata <- bdata[rownames(ldata),]
+
+### Write out the animals we used:
+
+cat(bdata[, "EarTagNumberCurrent"], sep = "\n", file = "EarTagNumberCurrent.txt")
+
 
 ### Load in genotypes
 geno <- read.table("http://files.genenetwork.org/current/GN600/BXD_current_rev050423.geno", 
