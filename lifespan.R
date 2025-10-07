@@ -1,5 +1,5 @@
 #
-# Lifespan - Actuarial mapping Strain means as well as individual level data mapping
+# lifespan.R - Actuarial mapping Strain means as well as individual level data mapping
 # 3 Month steps (~ 100 days) hit the bodyweight timepoints
 # AgeAtSetUp.in.colony..days. = Day at which the diet switch occured (HFD, as well as NAM), CD didn't switch they ate chow
 
@@ -11,15 +11,15 @@ source("shared.R")
 ### Mapping Weighted Strain means
 op <- par(mfrow = c(2,1))
 for(diet in c("CD", "HF")) {
-  isCD <- ldata[which(ldata[, "Diet"] == diet),]
-  mtable <- table(isCD[, "StrainName"])
+  isDIET <- ldata[which(ldata[, "Diet"] == diet),]
+  mtable <- table(isDIET[, "StrainName"])
   mtable <- mtable[which(mtable >= 3)]
   strains <- names(mtable)
   bxds <- strains[grep("BXD", strains)]
 
   weights <- mtable[bxds]
 
-  strainM <- round(unlist(lapply(bxds, function(x){ mean(isCD[which(isCD[, "StrainName"] == x), "AgeAtDeath..days."]); })), 0)
+  strainM <- round(unlist(lapply(bxds, function(x){ mean(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtDeath..days."]); })), 0)
   names(strainM) <- bxds
 
   genoS <- geno[,names(strainM)]
@@ -37,19 +37,19 @@ for(diet in c("CD", "HF")) {
 ### individual Level mapping (Random effects used to deal with correlation structure caused by multiple strain observations)
 op <- par(mfrow = c(2,1))
 for(diet in c("CD", "HF")){
-  isCD <- ldata[which(ldata[, "Diet"] == diet & grepl("BXD", ldata[, "StrainName"])),]
-  isCD <- isCD[which(isCD[, "StrainName"] %in% colnames(geno)),]
-  genoS <- geno[, isCD[, "StrainName"]]
-  strains <- isCD[, "StrainName"]
-  null <- lmer(isCD[, "AgeAtDeath..days."] ~ 1 + (1 | strains), REML = FALSE)
+  isDIET <- ldata[which(ldata[, "Diet"] == diet & grepl("BXD", ldata[, "StrainName"])),]
+  isDIET <- isDIET[which(isDIET[, "StrainName"] %in% colnames(geno)),]
+  genoS <- geno[, isDIET[, "StrainName"]]
+  strains <- isDIET[, "StrainName"]
+  null <- lmer(isDIET[, "AgeAtDeath..days."] ~ 1 + (1 | strains), REML = FALSE)
 
   pvals <- c()
   for(x in c(1:nrow(geno))) {
     gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
-    full <- lmer(isCD[, "AgeAtDeath..days."] ~ gts + (1 | strains), REML = FALSE)
+    full <- lmer(isDIET[, "AgeAtDeath..days."] ~ gts + (1 | strains), REML = FALSE)
     if(any(is.na(gts))){
       ## If we have missing genotypes, we need to account for this, specify an ALT model
-      alt <- lmer(isCD[which(!is.na(gts)), "AgeAtDeath..days."] ~ 1 + (1 | strains[which(!is.na(gts))]), REML = FALSE)
+      alt <- lmer(isDIET[which(!is.na(gts)), "AgeAtDeath..days."] ~ 1 + (1 | strains[which(!is.na(gts))]), REML = FALSE)
       pvals <- c(pvals, as.numeric(na.omit(anova(alt, full)[, "Pr(>Chisq)"])))
     }else{
       ## No missing genotypes, so just use the global NULL model which has all data
@@ -72,14 +72,14 @@ for(diet in c("CD", "HF")) {
   clusterExport(clust, "geno")
 
   pvalsL <- parLapply(clust, seq(30, 780, 30), function(day){
-    isCD <- ldata[which(ldata[, "Diet"] == diet & ldata[, "AgeAtDeath..days."] >= day),]
-    mtable <- table(isCD[, "StrainName"])
+    isDIET <- ldata[which(ldata[, "Diet"] == diet & ldata[, "AgeAtDeath..days."] >= day),]
+    mtable <- table(isDIET[, "StrainName"])
     mtable <- mtable[which(mtable >= 3)]
     strains <- names(mtable)
     bxds <- strains[grep("BXD", strains)]
     weights <- mtable[bxds]
 
-    strainM <- round(unlist(lapply(bxds, function(x){ mean(isCD[which(isCD[, "StrainName"] == x), "AgeAtDeath..days."]); })), 0)
+    strainM <- round(unlist(lapply(bxds, function(x){ mean(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtDeath..days."]); })), 0)
     names(strainM) <- bxds
 
     genoS <- geno[,names(strainM)]
