@@ -2,6 +2,8 @@
 # lifespan.R - Actuarial mapping Strain means as well as individual level data mapping
 # 3 Month steps (~ 100 days) hit the bodyweight timepoints
 # AgeAtSetUp.in.colony..days. = Day at which the diet switch occured (HFD, as well as NAM), CD didn't switch they ate chow
+#
+# Vivarium - https://genenetwork.org/show_trait?trait_id=10013&dataset=BXD-LongevityPublish
 
 library(lme4)
 library(parallel)
@@ -22,12 +24,16 @@ for(diet in c("CD", "HF")) {
   strainM <- round(unlist(lapply(bxds, function(x){ mean(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtDeath..days."]); })), 0)
   names(strainM) <- bxds
 
+  ## AgeAtSetUp P ~ 0.1
+  AgeAtSetUp <- round(unlist(lapply(bxds, function(x){ mean(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtSetUp.in.colony..days."]); })), 0)
+  names(AgeAtSetUp) <- bxds
+
   genoS <- geno[,names(strainM)]
 
   pvals <- c()
   for(x in c(1:nrow(geno))) {
-    gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
-    pvals <- c(pvals, anova(lm(strainM ~ gts, weights = weights))[[5]][1])
+      gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
+      pvals <- c(pvals, anova(lm(strainM ~ AgeAtSetUp + gts, weights = weights))[[5]][2])
     if(x %% 1000 == 1) cat(x, "\n")
   }
   write.table(cbind(map, -log10(pvals)), file = paste0("output/", diet, "_wMeans.txt"), sep = "\t", quote = FALSE)
@@ -41,16 +47,26 @@ for(diet in c("CD", "HF")){
   isDIET <- isDIET[which(isDIET[, "StrainName"] %in% colnames(geno)),]
   genoS <- geno[, isDIET[, "StrainName"]]
   strains <- isDIET[, "StrainName"]
-  null <- lmer(isDIET[, "AgeAtDeath..days."] ~ 1 + (1 | strains), REML = FALSE)
+
+  Y <- isDIET[, "AgeAtDeath..days."]
+  AgeAtSetUp <- isDIET[, "AgeAtSetUp.in.colony..days."]
+  vivarium <- as.factor(isDIET[, "vivarium"])
+
+  null <- lmer(Y ~ vivarium + AgeAtSetUp + (1 | strains), REML = FALSE)
 
   pvals <- c()
   for(x in c(1:nrow(geno))) {
     gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
-    full <- lmer(isDIET[, "AgeAtDeath..days."] ~ gts + (1 | strains), REML = FALSE)
-    if(any(is.na(gts))){
+
+    fd <- cbind(Y, AgeAtSetUp, vivarium, gts)
+    full <- lmer(Y ~ vivarium + AgeAtSetUp + gts + (1 | strains), REML = FALSE)
+
+    iix <- which(apply(apply(fd,1, is.na),2,sum) > 0)
+
+    if(length(iix) > 0) {
       ## If we have missing genotypes, we need to account for this, specify an ALT model
-      alt <- lmer(isDIET[which(!is.na(gts)), "AgeAtDeath..days."] ~ 1 + (1 | strains[which(!is.na(gts))]), REML = FALSE)
-      pvals <- c(pvals, as.numeric(na.omit(anova(alt, full)[, "Pr(>Chisq)"])))
+      alt0 <- lmer(Y[-iix] ~ vivarium[-iix] + AgeAtSetUp[-iix] + (1 | strains[-iix]), REML = FALSE)
+      pvals <- c(pvals, as.numeric(na.omit(anova(alt0, full)[, "Pr(>Chisq)"])))
     }else{
       ## No missing genotypes, so just use the global NULL model which has all data
       pvals <- c(pvals, as.numeric(na.omit(anova(null, full)[, "Pr(>Chisq)"])))
@@ -82,12 +98,16 @@ for(diet in c("CD", "HF")) {
     strainM <- round(unlist(lapply(bxds, function(x){ mean(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtDeath..days."]); })), 0)
     names(strainM) <- bxds
 
+    ## AgeAtSetUp P ~ 0.1
+    AgeAtSetUp <- round(unlist(lapply(bxds, function(x){ mean(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtSetUp.in.colony..days."]); })), 0)
+    names(AgeAtSetUp) <- bxds
+
     genoS <- geno[,names(strainM)]
 
     pvals <- c()
     for(x in c(1:nrow(geno))) {
       gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
-      pvals <- c(pvals, anova(lm(strainM ~ gts, weights = weights))[[5]][1])
+      pvals <- c(pvals, anova(lm(strainM ~ AgeAtSetUp + gts, weights = weights))[[5]][2])
     }
     return(pvals)
   })
@@ -100,13 +120,15 @@ for(diet in c("CD", "HF")) {
   op <- par(mfrow=c(2,1))
   image(-log10(pvalM), breaks = c(0,1,2,3,4,5,6,10), 
     col = c("white", "#E1E1E1", "#D0D0D0", "#00C0C0","#00B0B0","#00A0A0","#009090"), xaxt="n", yaxt = "n")
-  axis(2, at = (1:15 - 0.5) / 15, seq(30, 900, 60), las = 2)
+  #axis(2, at = (1:15 - 0.5) / 15, seq(30, 780, 30), las = 2)
   plot(-log10(pvalsL[[1]]), col = as.numeric(as.factor(map[, "Chr"])), xaxs="i")
 
-  write.table(cbind(map, -log10(pvalM)), file = paste0("output/", diet, "_wMeans_Progressive.txt"), sep = "\t", quote = FALSE)
+  res <- cbind(map, -log10(pvalM))
+  colnames(res) <- c("Chr","Locus","cM","Mb", seq(30, 780, 30))
+  write.table(res, file = paste0("output/", diet, "_wMeans_Progressive.txt"), sep = "\t", quote = FALSE)
 }
 
 ### Interactions together next Wednesday
 
-
+### Progressive Mapping, Weighted Strain means
 

@@ -2,6 +2,9 @@
 # bodyweight.R Actuarial mapping Strain means as well as individual level data mapping
 # 3 Month steps (~ 100 days) hit the bodyweight timepoints
 # AgeAtSetUp.in.colony..days. = Day at which the diet switch occured (HFD, as well as NAM), CD didn't switch they ate chow
+# AgeAtSetUp == DateWeightBaseline == DateDietStart 
+# Weight00.Baseline ~~ AgeAtSetUp
+
 
 library(lme4)
 library(parallel)
