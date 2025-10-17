@@ -40,7 +40,7 @@ pvalsL <- parLapply(clust, seq(30, 780, 30), function(day){
     full <- lmer(Y ~ diet + vivarium + AgeAtSetUp + gts + (1 | strains), data = fd, REML = FALSE)
     full.int <- lmer(Y ~ diet + vivarium + AgeAtSetUp + gts + diet:gts + (1 | strains), data = fd, REML = FALSE)
 
-    iix <- which(apply(apply(fd,1, is.na),2,sum) > 0)
+    iix <- which(apply(apply(fd, 1, is.na),2,sum) > 0)
 
     if(length(iix) > 0) {
       ## If we have missing genotypes, we need to account for this, specify an ALT model
@@ -63,7 +63,7 @@ pvalM.main <- c()
 pvalM.int <- c()
 for(x in 1:length(pvalsL)){ 
   pvalM.main <- cbind(pvalM.main, pvalsL[[x]][,1])
-  pvalM.int <- cbind(pvalM.int, pvalsL[[x]][,2])  
+  pvalM.int <- cbind(pvalM.int, pvalsL[[x]][,2])
 }
 
 res.main <- cbind(map, -log10(pvalM.main))
