@@ -26,6 +26,7 @@ pvalsL <- parLapply(clust, seq(30, 780, 30), function(day){
 
   Y <- isDIET[, "AgeAtDeath..days."]
   AgeAtSetUp <- isDIET[, "AgeAtSetUp.in.colony..days."]
+  AgeAtSetUp <- as.factor(cut(AgeAtSetUp, seq(0, 1000, 180))) ### Threshold for less extreme
   vivarium <- as.factor(isDIET[, "vivarium"])
   diet <- as.factor(isDIET[, "Diet"])
 

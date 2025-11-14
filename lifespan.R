@@ -10,6 +10,11 @@ library(parallel)
 
 source("shared.R")
 
+# Cut-AgeAtSetup
+ldata[which(ldata[,"AgeAtSetUp.in.colony..days."] < 0), "AgeAtSetUp.in.colony..days."] <- NA
+ldata <- cbind(ldata, AgeAtSetUpGroup = cut(ldata[, "AgeAtSetUp.in.colony..days."], seq(0, 1000, 180)))
+write.table(ldata, file = "output/BxDLifespan_SetUpAge.txt", sep = "\t", quote = FALSE)
+
 ### Mapping Weighted Strain means
 op <- par(mfrow = c(2,1))
 for(diet in c("CD", "HF")) {
@@ -26,6 +31,7 @@ for(diet in c("CD", "HF")) {
 
   ## AgeAtSetUp P ~ 0.1
   AgeAtSetUp <- round(unlist(lapply(bxds, function(x){ mean(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtSetUp.in.colony..days."]); })), 0)
+  AgeAtSetUp <- as.factor(cut(AgeAtSetUp, seq(0, 1000, 180))) ### Threshold for less extreme
   names(AgeAtSetUp) <- bxds
 
   genoS <- geno[,names(strainM)]
@@ -50,7 +56,15 @@ for(diet in c("CD", "HF")){
 
   Y <- isDIET[, "AgeAtDeath..days."]
   AgeAtSetUp <- isDIET[, "AgeAtSetUp.in.colony..days."]
+  AgeAtSetUp <- as.factor(cut(AgeAtSetUp, seq(0, 1000, 180))) ### Threshold for less extreme
   vivarium <- as.factor(isDIET[, "vivarium"])
+
+  aa <- boxplot(Y ~ AgeAtSetUp)
+  pdf(paste0("output/boxplot_AgeAtSetup_",diet,".pdf"), width = 24, height = 18)
+  plot(Y ~ AgeAtSetUp)
+  text(1:length(aa$n), rep(aa$stats[3,]-50, length(aa$n)), paste0("n=", aa$n), col = "white")
+  dev.off()
+
 
   null <- lmer(Y ~ vivarium + AgeAtSetUp + (1 | strains), REML = FALSE)
 
@@ -61,11 +75,12 @@ for(diet in c("CD", "HF")){
     fd <- cbind(Y, AgeAtSetUp, vivarium, gts)
     full <- lmer(Y ~ vivarium + AgeAtSetUp + gts + (1 | strains), REML = FALSE)
 
-    iix <- which(apply(apply(fd,1, is.na),2,sum) > 0)
+    iix <- which(apply(apply(fd, 1, is.na),2,sum) > 0)
 
     if(length(iix) > 0) {
       ## If we have missing genotypes, we need to account for this, specify an ALT model
       alt0 <- lmer(Y[-iix] ~ vivarium[-iix] + AgeAtSetUp[-iix] + (1 | strains[-iix]), REML = FALSE)
+      #alt0 <- lmer(Y[-iix] ~ (1 | strains[-iix]), REML = FALSE)
       pvals <- c(pvals, as.numeric(na.omit(anova(alt0, full)[, "Pr(>Chisq)"])))
     }else{
       ## No missing genotypes, so just use the global NULL model which has all data
@@ -100,6 +115,7 @@ for(diet in c("CD", "HF")) {
 
     ## AgeAtSetUp P ~ 0.1
     AgeAtSetUp <- round(unlist(lapply(bxds, function(x){ mean(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtSetUp.in.colony..days."]); })), 0)
+    AgeAtSetUp <- as.factor(cut(AgeAtSetUp, seq(0, 1000, 180))) ### Threshold for less extreme
     names(AgeAtSetUp) <- bxds
 
     genoS <- geno[,names(strainM)]
