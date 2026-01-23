@@ -102,7 +102,7 @@ for(diet in c("CD", "HF")) {
   clusterExport(clust, "diet")
   clusterExport(clust, "geno")
 
-  pvalsL <- parLapply(clust, seq(30, 780, 30), function(day){
+  pvalsL <- parLapply(clust, seq(20, 780, 30), function(day){
     isDIET <- ldata[which(ldata[, "Diet"] == diet & ldata[, "AgeAtDeath..days."] >= day),]
     mtable <- table(isDIET[, "StrainName"])
     mtable <- mtable[which(mtable >= 3)]
@@ -140,7 +140,7 @@ for(diet in c("CD", "HF")) {
   plot(-log10(pvalsL[[1]]), col = as.numeric(as.factor(map[, "Chr"])), xaxs="i")
 
   res <- cbind(map, -log10(pvalM))
-  colnames(res) <- c("Chr","Locus","cM","Mb", seq(30, 780, 30))
+  colnames(res) <- c("Chr","Locus","cM","Mb", seq(20, 780, 30))
   write.table(res, file = paste0("output/", diet, "_wMeans_Progressive.txt"), sep = "\t", quote = FALSE)
 }
 

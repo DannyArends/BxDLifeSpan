@@ -27,7 +27,7 @@ for(x in sample(rownames(bdata))) {
 
   alltps <- unique(c(alltps, tp[-weights.na]))
 
-  if(length(tp[-weights.na]) > 2) good <- c(good, x)
+  if(length(tp[-weights.na]) >= 2) good <- c(good, x)
 
   points(tp[-weights.na], weight[-weights.na], t = "l", col = c(rgb(1,0,1,0.5), rgb(0,1,1,0.5))[c("CD", "HF") == bdata[x, "Diet"] ])
 }
@@ -82,9 +82,13 @@ points(timepoints, n.CD, pch = 19, col = rgb(1,0,1,0.5))
 points(timepoints, n.HF, pch = 19, col = rgb(0,1,1,0.5))
 legend("topright", c("All", "CD", "HF"), pch = 19, col = c(1, rgb(1,0,1,0.5),  rgb(0,1,1,0.5)))
 
+
+write.table(BWs, "output/bodyweightInterpolatedData.txt", sep = "\t", quote = FALSE)
+
+
 # Reasonable timepoints
 mapAble <- names(which(nSamples > 400))
-tpsA <- mapAble[which(mapAble %in% as.character(seq(30, 780, 30)))]
+tpsA <- mapAble[which(mapAble %in% as.character(seq(20, 780, 30)))]
 
 ### Mapping Weighted Strain means
 for(diet in c("CD", "HF")) {

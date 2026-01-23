@@ -18,7 +18,7 @@ clusterExport(clust, "ldata")
 clusterExport(clust, "geno")
 clusterCall(clust, function() library(lme4))
 
-pvalsL <- parLapply(clust, seq(30, 780, 30), function(day){
+pvalsL <- parLapply(clust, seq(20, 780, 30), function(day){
   isDIET <- ldata[which(grepl("BXD", ldata[, "StrainName"]) & ldata[, "AgeAtDeath..days."] >= day),]
   isDIET <- isDIET[which(isDIET[, "StrainName"] %in% colnames(geno)),]
   genoS <- geno[, isDIET[, "StrainName"]]
@@ -68,10 +68,10 @@ for(x in 1:length(pvalsL)){
 }
 
 res.main <- cbind(map, -log10(pvalM.main))
-colnames(res.main) <- c("Chr","Locus","cM","Mb", seq(30, 780, 30))
+colnames(res.main) <- c("Chr","Locus","cM","Mb", seq(20, 780, 30))
 
 res.int <- cbind(map, -log10(pvalM.int))
-colnames(res.int) <- c("Chr","Locus","cM","Mb", seq(30, 780, 30))
+colnames(res.int) <- c("Chr","Locus","cM","Mb", seq(20, 780, 30))
 
 write.table(res.main, file = paste0("output/main_ind_Progressive.txt"), sep = "\t", quote = FALSE)
 write.table(res.int, file = paste0("output/int_ind_Progressive.txt"), sep = "\t", quote = FALSE)
