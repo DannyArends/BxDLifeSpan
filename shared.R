@@ -5,11 +5,24 @@
 ldata <- read.table("data/BxD_Lifespan.txt", sep = "\t", header = TRUE, row.names=2)
 bdata <- read.table("data/BxD_Bodyweights.txt", sep = "\t", header = TRUE)
 vdata <- read.csv("data/BDL_10013.csv", header = TRUE, comment.char = "#", skip=10, row.names=1)
+ndata <- read.csv("data/BxD_NAM_Lifespan.txt", sep = "\t", header = TRUE, row.names=2)
+colnames(ndata)[11] <- "AgeAtSetUp.in.colony..days."
+nbdata <- read.csv("data/BxD_NAM_Bodyweights.txt", sep = "\t", header = TRUE, row.names=2)
+
+#Remove the computed data from the BXD bodyweight
+bdata <- bdata[,-which(grepl("DaysOnDietAtWeight", colnames(bdata)))]
+bdata <- bdata[,-which(!colnames(bdata) %in% colnames(nbdata))]
+
+### Merge BXD with NAM (Bodyweight)
+bdata <- rbind(bdata, nbdata[, colnames(bdata)])
+
+# Add the NAM data to the lifespan data
+ldata <- rbind(ldata, ndata[, colnames(ldata)])
 
 ### One eartag is found attached to two different mice
 eartag <- names(which(table(bdata[,1]) > 1))
-bdata <- bdata[-which(bdata[,1] == eartag),]
-ldata <- ldata[-which(rownames(ldata) == eartag),]
+bdata <- bdata[-which(bdata[,1] %in% eartag),]
+ldata <- ldata[-which(rownames(ldata) %in% eartag),]
 
 eartag <- names(which(table(vdata[,"EarTag"]) > 1))
 vdata <- vdata[-which(vdata[,"EarTag"] %in% eartag),]
@@ -27,6 +40,16 @@ bdata <- bdata[which(rownames(bdata) %in% rownames(ldata)),]
 ldata <- ldata[which(rownames(ldata) %in% rownames(bdata)),]
 vdata <- vdata[which(rownames(vdata) %in% rownames(bdata)),]
 
+# Animals without vivarium data
+ldata[which(!rownames(ldata) %in% rownames(vdata)),]
+vdata <- rbind(vdata, "2047" = NA)
+vdata <- rbind(vdata, "2880" = NA)
+vdata <- rbind(vdata, "2878" = NA)
+vdata <- rbind(vdata, "2879" = NA)
+vdata["2047", "Value"] = 1
+vdata["2880", "Value"] = 3
+vdata["2878", "Value"] = 3
+vdata["2879", "Value"] = 3
 
 ### Sort based on the order in lifespan
 bdata <- bdata[rownames(ldata),]
@@ -39,8 +62,7 @@ ldata <- cbind(ldata, vivarium = vdata[, "Value"])
 cat(bdata[, "EarTagNumberCurrent"], sep = "\n", file = "output/EarTagNumberCurrent.txt")
 
 ### Load in genotypes
-geno <- read.table("http://files.genenetwork.org/current/GN600/BXD_current_rev050423.geno", 
-                   sep = "\t", skip=23, header = TRUE, na.strings = c("U", "", "NA"))
+geno <- read.table("data/BXD_current_rev050423.geno", sep = "\t", skip=23, header = TRUE, na.strings = c("U", "", "NA"))
 map <- geno[, 1:4]
 geno <- geno[, -c(1:4)]
 rownames(geno) <- map[,2]

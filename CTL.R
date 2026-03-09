@@ -169,9 +169,9 @@ points(CDn[,2], CDw[,2])
 pVals <- matrix(NA, dim(map), length(TPStodo))
 rownames(pVals) <- rownames(map)
 colnames(pVals) <- TPStodo
-for(tp in TPStodo[10:14]){
-  COR <- read.table(paste0("output/CTL/CD_Wcor",tp,".txt"))
-  INDs <- read.table(paste0("output/CTL/CD_Wn",tp,".txt"))
+for(tp in TPStodo){
+  COR <- read.table(paste0("output/CTL/HF_cor",tp,".txt"))
+  INDs <- read.table(paste0("output/CTL/HF_n",tp,".txt"))
   pC <- c()
   for(x in 1:nrow(COR)){
     cor <- COR[x,]
@@ -188,6 +188,10 @@ for(tp in TPStodo[10:14]){
   }
 }
 
-  image(-log10(pVals[,1:16]), breaks = c(0,1,2,3,4,5,6,10), 
-    col = c("white", "#E1E1E1", "#D0D0D0", "#00C0C0","#00B0B0","#00A0A0","#900000"), xaxt="n", yaxt = "n")
-  axis(2, at = (1:7 - 0.5) / 7, seq(50, 780, 30)[1:8], las = 2)
+write.table(pVals, "output/CTL_HF_Pmatrix.txt", sep = "\t", quote=FALSE)
+
+pVals <- read.table("output/CTL_HF_Pmatrix.txt", sep = "\t")
+
+image(-log10(apply(pVals,2,as.numeric)), breaks = c(0,1,2,3,4,5,6,10), 
+      col = c("white", "#E1E1E1", "#D0D0D0", "#00C0C0","#00B0B0","#00A0A0","#900000"), xaxt="n", yaxt = "n")
+axis(2, at = (1:7 - 0.5) / 7, seq(50, 780, 30)[1:8], las = 2)

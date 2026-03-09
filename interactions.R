@@ -12,6 +12,8 @@ source("shared.R")
 
 ### individual Level mapping (Random effects used to deal with correlation structure caused by multiple strain observations)
 
+ldata <- ldata[which(ldata[, "Diet"] %in% c("CD", "HF")),]
+
 n.cores <- (detectCores() / 2) - 1
 clust <- makeCluster(n.cores)
 clusterExport(clust, "ldata")
@@ -26,15 +28,16 @@ pvalsL <- parLapply(clust, seq(20, 780, 30), function(day){
 
   Y <- isDIET[, "AgeAtDeath..days."]
   AgeAtSetUp <- isDIET[, "AgeAtSetUp.in.colony..days."]
-  AgeAtSetUp <- as.factor(cut(AgeAtSetUp, seq(0, 1000, 180))) ### Threshold for less extreme
+  AgeAtSetUp <- as.factor(cut(as.numeric(AgeAtSetUp), seq(0, 1000, 180))) ### Threshold for less extreme
   vivarium <- as.factor(isDIET[, "vivarium"])
   diet <- as.factor(isDIET[, "Diet"])
 
-  null <- lmer(Y ~ diet + vivarium + AgeAtSetUp + (1 | strains), REML = FALSE)
+  fd <- data.frame(Y, strains, diet, AgeAtSetUp, vivarium)
+  null <- lmer(Y ~ diet + vivarium + AgeAtSetUp + (1 | strains), data = fd, REML = FALSE)
 
   pvals.main <- c()
   pvals.int <- c()
-  for(x in c(1:nrow(geno))) {
+  for(x in c(1:10)){ #nrow(geno))) {
     gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
 
     fd <- data.frame(Y, strains, diet, AgeAtSetUp, vivarium, gts)
@@ -56,15 +59,17 @@ pvalsL <- parLapply(clust, seq(20, 780, 30), function(day){
     }
     if(x %% 100 == 1) cat(x, "\n")
   }
-  return(cbind(main = pvals.main, int = pvals.int))
+  return(list(cbind(main = pvals.main, int = pvals.int), length(strains)))
 })
 stopCluster(clust)
 
 pvalM.main <- c()
 pvalM.int <- c()
+nInd <- c()
 for(x in 1:length(pvalsL)){ 
-  pvalM.main <- cbind(pvalM.main, pvalsL[[x]][,1])
-  pvalM.int <- cbind(pvalM.int, pvalsL[[x]][,2])
+  pvalM.main <- cbind(pvalM.main, pvalsL[[x]][[1]][,1])
+  pvalM.int <- cbind(pvalM.int, pvalsL[[x]][[1]][,2])
+  nInd <- c(nInd, pvalsL[[x]][[2]])
 }
 
 res.main <- cbind(map, -log10(pvalM.main))
@@ -73,6 +78,7 @@ colnames(res.main) <- c("Chr","Locus","cM","Mb", seq(20, 780, 30))
 res.int <- cbind(map, -log10(pvalM.int))
 colnames(res.int) <- c("Chr","Locus","cM","Mb", seq(20, 780, 30))
 
+write.table(nInd, file = paste0("output/N_ind_Progressive.txt"), sep = "\t", quote = FALSE)
 write.table(res.main, file = paste0("output/main_ind_Progressive.txt"), sep = "\t", quote = FALSE)
 write.table(res.int, file = paste0("output/int_ind_Progressive.txt"), sep = "\t", quote = FALSE)
 

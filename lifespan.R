@@ -12,12 +12,13 @@ source("shared.R")
 
 # Cut-AgeAtSetup
 ldata[which(ldata[,"AgeAtSetUp.in.colony..days."] < 0), "AgeAtSetUp.in.colony..days."] <- NA
-ldata <- cbind(ldata, AgeAtSetUpGroup = cut(ldata[, "AgeAtSetUp.in.colony..days."], seq(0, 1000, 180)))
+ldata <- cbind(ldata, AgeAtSetUpGroup = cut(as.numeric(ldata[, "AgeAtSetUp.in.colony..days."]), seq(0, 1000, 180)))
+ldata <- ldata[-which(is.na(ldata[, "AgeAtSetUpGroup"])),]
 write.table(ldata, file = "output/BxDLifespan_SetUpAge.txt", sep = "\t", quote = FALSE)
 
 ### Mapping Weighted Strain means
 op <- par(mfrow = c(2,1))
-for(diet in c("CD", "HF")) {
+for(diet in c("CD", "HF", "NAM")) {
   isDIET <- ldata[which(ldata[, "Diet"] == diet),]
   mtable <- table(isDIET[, "StrainName"])
   mtable <- mtable[which(mtable >= 3)]
@@ -30,7 +31,7 @@ for(diet in c("CD", "HF")) {
   names(strainM) <- bxds
 
   ## AgeAtSetUp P ~ 0.1
-  AgeAtSetUp <- round(unlist(lapply(bxds, function(x){ mean(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtSetUp.in.colony..days."]); })), 0)
+  AgeAtSetUp <- round(unlist(lapply(bxds, function(x){ mean(as.numeric(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtSetUp.in.colony..days."])); })), 0)
   AgeAtSetUp <- as.factor(cut(AgeAtSetUp, seq(0, 1000, 180))) ### Threshold for less extreme
   names(AgeAtSetUp) <- bxds
 
@@ -48,14 +49,14 @@ for(diet in c("CD", "HF")) {
 
 ### individual Level mapping (Random effects used to deal with correlation structure caused by multiple strain observations)
 op <- par(mfrow = c(2,1))
-for(diet in c("CD", "HF")){
+for(diet in c("CD", "HF", "NAM")){
   isDIET <- ldata[which(ldata[, "Diet"] == diet & grepl("BXD", ldata[, "StrainName"])),]
   isDIET <- isDIET[which(isDIET[, "StrainName"] %in% colnames(geno)),]
   genoS <- geno[, isDIET[, "StrainName"]]
   strains <- isDIET[, "StrainName"]
 
   Y <- isDIET[, "AgeAtDeath..days."]
-  AgeAtSetUp <- isDIET[, "AgeAtSetUp.in.colony..days."]
+  AgeAtSetUp <- as.numeric(isDIET[, "AgeAtSetUp.in.colony..days."])
   AgeAtSetUp <- as.factor(cut(AgeAtSetUp, seq(0, 1000, 180))) ### Threshold for less extreme
   vivarium <- as.factor(isDIET[, "vivarium"])
 
@@ -65,21 +66,30 @@ for(diet in c("CD", "HF")){
   text(1:length(aa$n), rep(aa$stats[3,]-50, length(aa$n)), paste0("n=", aa$n), col = "white")
   dev.off()
 
-
-  null <- lmer(Y ~ vivarium + AgeAtSetUp + (1 | strains), REML = FALSE)
+  null <- lmer(Y ~ AgeAtSetUp + (1 | strains), REML = FALSE)
+  if(length(levels(vivarium)) >1) null <- lmer(Y ~ vivarium + AgeAtSetUp + (1 | strains), REML = FALSE)
 
   pvals <- c()
   for(x in c(1:nrow(geno))) {
     gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
 
     fd <- cbind(Y, AgeAtSetUp, vivarium, gts)
-    full <- lmer(Y ~ vivarium + AgeAtSetUp + gts + (1 | strains), REML = FALSE)
+
+    if(length(levels(vivarium)) >1){
+      full <- lmer(Y ~ vivarium + AgeAtSetUp + gts + (1 | strains), REML = FALSE)
+    }else{
+      full <- lmer(Y ~ AgeAtSetUp + gts + (1 | strains), REML = FALSE)
+    }
 
     iix <- which(apply(apply(fd, 1, is.na),2,sum) > 0)
 
     if(length(iix) > 0) {
       ## If we have missing genotypes, we need to account for this, specify an ALT model
-      alt0 <- lmer(Y[-iix] ~ vivarium[-iix] + AgeAtSetUp[-iix] + (1 | strains[-iix]), REML = FALSE)
+     if(length(levels(vivarium)) >1){
+        alt0 <- lmer(Y[-iix] ~ vivarium[-iix] + AgeAtSetUp[-iix] + (1 | strains[-iix]), REML = FALSE)
+      }else{
+        alt0 <- lmer(Y[-iix] ~ AgeAtSetUp[-iix] + (1 | strains[-iix]), REML = FALSE)
+      }
       #alt0 <- lmer(Y[-iix] ~ (1 | strains[-iix]), REML = FALSE)
       pvals <- c(pvals, as.numeric(na.omit(anova(alt0, full)[, "Pr(>Chisq)"])))
     }else{
@@ -92,9 +102,13 @@ for(diet in c("CD", "HF")){
   plot(-log10(pvals), col = as.numeric(as.factor(map[, "Chr"])))
 }
 
+pvalsILM <- pvals
+#### UPDATe for NAME mapping, remove the vivarium from the model , when mapping NAMs
+
 ### Progressive Mapping, Weighted Strain means
 for(diet in c("CD", "HF")) {
   pvalsM <- c()
+  nVector <- c()
 
   n.cores <- (detectCores() / 2) - 1
   clust <- makeCluster(n.cores)
@@ -114,7 +128,7 @@ for(diet in c("CD", "HF")) {
     names(strainM) <- bxds
 
     ## AgeAtSetUp P ~ 0.1
-    AgeAtSetUp <- round(unlist(lapply(bxds, function(x){ mean(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtSetUp.in.colony..days."]); })), 0)
+    AgeAtSetUp <- round(unlist(lapply(bxds, function(x){ mean(as.numeric(isDIET[which(isDIET[, "StrainName"] == x), "AgeAtSetUp.in.colony..days."])); })), 0)
     AgeAtSetUp <- as.factor(cut(AgeAtSetUp, seq(0, 1000, 180))) ### Threshold for less extreme
     names(AgeAtSetUp) <- bxds
 
@@ -125,23 +139,24 @@ for(diet in c("CD", "HF")) {
       gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
       pvals <- c(pvals, anova(lm(strainM ~ AgeAtSetUp + gts, weights = weights))[[5]][2])
     }
-    return(pvals)
+    return(list(pvals, length(names(strainM))))
   })
   stopCluster(clust)
-  plot(-log10(pvalsL[[1]]), col = as.numeric(as.factor(map[, "Chr"])))
+  ns <- unlist(lapply(pvalsL, "[", 2))
+  names(ns) <- seq(20, 780, 30)
 
   pvalM <- c()
-  for(x in 1:length(pvalsL)){ pvalM <- cbind(pvalM, pvalsL[[x]]) }
+  for(x in 1:length(pvalsL)){ pvalM <- cbind(pvalM, pvalsL[[x]][[1]]) }
 
   op <- par(mfrow=c(2,1))
   image(-log10(pvalM), breaks = c(0,1,2,3,4,5,6,10), 
     col = c("white", "#E1E1E1", "#D0D0D0", "#00C0C0","#00B0B0","#00A0A0","#009090"), xaxt="n", yaxt = "n")
   #axis(2, at = (1:15 - 0.5) / 15, seq(30, 780, 30), las = 2)
-  plot(-log10(pvalsL[[1]]), col = as.numeric(as.factor(map[, "Chr"])), xaxs="i")
 
   res <- cbind(map, -log10(pvalM))
   colnames(res) <- c("Chr","Locus","cM","Mb", seq(20, 780, 30))
-  write.table(res, file = paste0("output/", diet, "_wMeans_Progressive.txt"), sep = "\t", quote = FALSE)
+  write.table(res, file = paste0("output/", diet, "_wMeans_Y_Progressive.txt"), sep = "\t", quote = FALSE)
+  write.table(ns, file = paste0("output/", diet, "_wMeans_Y_Progressive_N.txt"), sep = "\t", quote = FALSE)
 }
 
 ### Interactions together next Wednesday
