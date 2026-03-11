@@ -58,9 +58,6 @@ vdata <- vdata[rownames(ldata),]
 ### Add viviarium data to the lifespan dataset (ldata)
 ldata <- cbind(ldata, vivarium = vdata[, "Value"])
 
-### Write out the animals we used:
-cat(bdata[, "EarTagNumberCurrent"], sep = "\n", file = "output/EarTagNumberCurrent.txt")
-
 ### Load in genotypes
 geno <- read.table("data/BXD_current_rev050423.geno", sep = "\t", skip=23, header = TRUE, na.strings = c("U", "", "NA"))
 map <- geno[, 1:4]

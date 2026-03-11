@@ -16,6 +16,9 @@ ldata <- cbind(ldata, AgeAtSetUpGroup = cut(as.numeric(ldata[, "AgeAtSetUp.in.co
 ldata <- ldata[-which(is.na(ldata[, "AgeAtSetUpGroup"])),]
 write.table(ldata, file = "output/BxDLifespan_SetUpAge.txt", sep = "\t", quote = FALSE)
 
+### Write out the animals we used:
+write.table(cbind(rownames(ldata), ldata[, "Diet"], ldata[, "StrainName"]), file = "output/EarTagNumberCurrent.txt", sep = "\t", quote = FALSE, row.names=FALSE)
+
 ### Mapping Weighted Strain means
 op <- par(mfrow = c(2,1))
 for(diet in c("CD", "HF", "NAM")) {

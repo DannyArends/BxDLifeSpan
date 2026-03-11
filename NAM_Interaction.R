@@ -45,7 +45,7 @@ for(x in 1:nrow(geno)) {
   }
   if(x %% 100 == 1) cat(x, "\n")
 }
-write.table(cbind(map, -log10(pvals)), file = paste0("output/", diet, "_ind.txt"), sep = "\t", quote = FALSE)
+write.table(cbind(map, -log10(pvals)), file = paste0("output/NAM_Interaction.txt"), sep = "\t", quote = FALSE)
 
 
 edge1 <- "rsm10000000387"
