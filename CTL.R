@@ -19,7 +19,7 @@ source("adjust.R")
 
 ### CTL based on strain means first (at timepoints where we have (2 x 30) ~ 60 strains available)
 ##
-for(diet in c("CD")) {
+for(diet in c("HF")) {
   ourTPS <- seq(20, 780, 30)
   TPStodo <- colnames(BWsAdj)[24:751][which(colnames(BWsAdj)[24:751] %in% as.character(ourTPS))]
   mCTL <- vector("list", length(TPStodo))
@@ -27,7 +27,7 @@ for(diet in c("CD")) {
   mCTLN <- vector("list", length(TPStodo))
   names(mCTLN) <- TPStodo
 
-  for(tp in TPStodo) {
+  for(tp in TPStodo[14:16]) {
     iix <- which(ldata[, "AgeAtSetUp.in.colony..days."] <= as.numeric(tp) & 
                  ldata[, "AgeAtDeath..days."] >= as.numeric(tp) & 
                  grepl("BXD", ldata[, "StrainName"]) &
@@ -61,7 +61,7 @@ for(diet in c("CD")) {
       strains_B <- lgtspan[B6, "StrainName"][valid_B]
       strain_counts_B <- table(strains_B)
       weights_B <- as.numeric(1 / strain_counts_B[strains_B])
-      cB <- cov.wt(mat_B[valid_B, ], wt = weights_B, cor = TRUE)$cor[1,2]
+      cB <- cov.wt(apply(mat_B[valid_B, ],2,rank), wt = weights_B, cor = TRUE)$cor[1,2]
 
       # non - weighted
       #cDold <- cor(bspan[rownames(lgtspan)[DBA], as.character(tp)], lgtspan[rownames(lgtspan)[DBA],"AgeAtDeath..days."], use = "pair")
@@ -71,7 +71,7 @@ for(diet in c("CD")) {
       strains_D <- lgtspan[DBA, "StrainName"][valid_D]
       strain_counts_D <- table(strains_D)
       weights_D <- as.numeric(1 / strain_counts_D[strains_D])
-      cD <- cov.wt(mat_D[valid_D, ], wt = weights_D, cor = TRUE)$cor[1,2]
+      cD <- cov.wt(apply(mat_D[valid_D, ],2,rank), wt = weights_D, cor = TRUE)$cor[1,2]
 
 
       #cat("", tp, ",", diet, ",", m, "=", cc, ",",cB, ",", cD, "\n")
@@ -88,8 +88,8 @@ for(diet in c("CD")) {
 }
 
 for(x in 1:length(mCTL)){
-  write.table(mCTL[[x]], file = paste0("output/CTL/CD_Wcor", names(mCTL)[x], ".txt"), sep = "\t", quote = FALSE)
-  write.table(mCTLN[[x]], file = paste0("output/CTL/CD_Wn", names(mCTLN)[x], ".txt"), sep = "\t", quote = FALSE)
+  write.table(mCTL[[x]], file = paste0("output/CTL/CD_X_Wcor", names(mCTL)[x], ".txt"), sep = "\t", quote = FALSE)
+  write.table(mCTLN[[x]], file = paste0("output/CTL/CD_X_Wn", names(mCTLN)[x], ".txt"), sep = "\t", quote = FALSE)
 }
 
 tp <- 5

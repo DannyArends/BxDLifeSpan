@@ -46,7 +46,6 @@ for(x in good){
   BWs[x, as.character(tp[-weights.na])] <-  weight[-weights.na]
 }
 
-
 ### Linear interpolation on BWs
 for(x in good){
   tps <- colnames(BWs)[which(!is.na(BWs[x,]))]
@@ -72,15 +71,18 @@ bdata <- bdata[rownames(BWs),]
 diet <- bdata[, "Diet"]
 CD <- which(diet == "CD")
 HF <- which(diet == "HF")
+NAM <- which(diet == "NAM")
 nSamples <- nrow(BWs) - apply(apply(BWs, 2, is.na),2,sum)
 n.CD <- length(CD) - apply(apply(BWs[CD,], 2, is.na),2,sum)
 n.HF <- length(HF) - apply(apply(BWs[HF,], 2, is.na),2,sum)
+n.NAM <- length(NAM) - apply(apply(BWs[NAM,], 2, is.na),2,sum)
 
 timepoints <- as.numeric(colnames(BWs))
 plot(timepoints, nSamples, main = "Sample Size", pch = 19, ylab = "nSamples", xlab = "Time")
 points(timepoints, n.CD, pch = 19, col = rgb(1,0,1,0.5))
 points(timepoints, n.HF, pch = 19, col = rgb(0,1,1,0.5))
-legend("topright", c("All", "CD", "HF"), pch = 19, col = c(1, rgb(1,0,1,0.5),  rgb(0,1,1,0.5)))
+points(timepoints, n.NAM, pch = 19, col = rgb(0,0,1,0.5))
+legend("topright", c("All", "CD", "HF", "NAM"), pch = 19, col = c(1, rgb(1,0,1,0.5),  rgb(0,1,1,0.5),  rgb(0,0,1,0.5)))
 
 
 write.table(BWs, "output/bodyweightInterpolatedData.txt", sep = "\t", quote = FALSE)
@@ -91,7 +93,7 @@ mapAble <- names(which(nSamples > 400))
 tpsA <- mapAble[which(mapAble %in% as.character(seq(20, 780, 30)))]
 
 ### Mapping Weighted Strain means
-for(diet in c("CD", "HF")) {
+for(diet in c("CD", "HF", "NAM")) {
   pvalsM <- c()
   op <- par(mfrow = c(2,1))
   for(tp in tpsA){
@@ -119,7 +121,7 @@ for(diet in c("CD", "HF")) {
       pvals <- c(pvals, anova(lm(strainM ~ gts, weights = weights))[[5]][1])
       if(x %% 1000 == 1) cat(x, "\n")
     }
-    plot(-log10(pvals), col = as.numeric(as.factor(map[, "Chr"])), main = paste0(diet, "@", tp, ",n=", length(bxds)))
+    #plot(-log10(pvals), col = as.numeric(as.factor(map[, "Chr"])), main = paste0(diet, "@", tp, ",n=", length(bxds)))
     pvalsM <- cbind(pvalsM, pvals)
   }
   res <- cbind(map, -log10(pvalsM))
