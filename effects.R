@@ -11,6 +11,11 @@ source("shared.R")
 
 mdata <- read.table("output/table.txt", sep = "\t", header = TRUE)
 
+lodfiles <- list(CD = "output/CD_wMeans_Y_Progressive.txt", HF = "output/HF_wMeans_Y_Progressive.txt")
+lods <- lapply(lodfiles, read.table, sep = "\t", header = TRUE, check.names = FALSE)
+lods <- lapply(lods, function(z){ rownames(z) <- z[, "Locus"]; z })
+lodFloor <- -28
+
 std <- function(x) sd(x)/sqrt(length(x))
 
 for(x in 1:nrow(mdata)){
@@ -19,11 +24,15 @@ for(x in 1:nrow(mdata)){
   ii <- rownames(map[which.min(abs(map[which(map[,1] == chr),4] - top)),])
   cat(mdata[x,1], chr, top, ii, "\n")
   pdf(paste0("output/effects/",mdata[x, 1],".pdf"), width = 12, height = 8)
-  plot(c(20, 780), c(-20, 20), t = "n", xlab = "Truncation Age [d]", ylab = "Actuarial Effect Size [d]", main = mdata[x, 1], xaxt="n", yaxt = "n")
+  plot(c(20, 780), c(lodFloor, 20), t = "n", xlab = "Truncation Age [d]", ylab = "Actuarial Effect Size [d]", main = mdata[x, 1], xaxt="n", yaxt = "n")
   axis(1, at = seq(20, 780, 30), rep("", 26), tcl = -0.25)
   axis(1, at = seq(20, 780, 30)[seq(2, 26,2)], seq(20, 780, 30)[seq(2, 26,2)])
   axis(2, at = seq(-20, 20, 1), rep("", 41), tcl = -0.25)
   axis(2, at = seq(-20, 20, 5), seq(-20, 20, 5), las = 2)
+  abline(h = -20, col = "gray")
+  abline(h = lodFloor + 3, lty = 2, col = "gray")
+  axis(4, at = lodFloor + seq(0, 8, 2), seq(0, 8, 2), las = 2)
+  mtext("LOD", side = 4, line = 2, at = lodFloor + 4)
   for(diet in c("CD", "HF")) {
     Bmean <- c()
     Bstd <- c()
@@ -67,7 +76,12 @@ for(x in 1:nrow(mdata)){
 
     points(seq(20, 780, 30), Bmean, t = "b", pch = 15+which(c("HF", "CD", "NAM") == diet))
     points(seq(20, 780, 30), Dmean, t = "b", col = "chocolate", pch = 15+which(c("HF", "CD", "NAM") == diet))
+
+    lod <- as.numeric(lods[[diet]][ii, as.character(seq(20, 780, 30))])
+    points(seq(20, 780, 30), lod + lodFloor, t = "l", lwd = 2, lty = 1 + (diet == "CD"))
   }
+  legend("topleft", c("B", "D"), col = c("black", "chocolate"), lwd = 2, bty = "n")
+  legend("topright", c("CD", "HF"), pch = c(17, 16), lty = c(2, 1), lwd = 2, bty = "n")
   dev.off()
 }
 
