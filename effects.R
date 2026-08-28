@@ -21,7 +21,8 @@ std <- function(x) sd(x)/sqrt(length(x))
 for(x in 1:nrow(mdata)){
   chr <- mdata[x, "Chr"]
   top <- mdata[x, "Peak"]
-  ii <- rownames(map[which.min(abs(map[which(map[,1] == chr),4] - top)),])
+  onchr <- map[map[, 1] == chr,]
+  ii <- rownames(onchr)[which.min(abs(onchr[, 4] - top))]
   cat(mdata[x,1], chr, top, ii, "\n")
   pdf(paste0("output/effects/",mdata[x, 1],".pdf"), width = 12, height = 8)
   plot(c(20, 780), c(lodFloor, 20), t = "n", xlab = "Truncation Age [d]", ylab = "Actuarial Effect Size [d]", main = mdata[x, 1], xaxt="n", yaxt = "n")
@@ -81,7 +82,9 @@ for(x in 1:nrow(mdata)){
     points(seq(20, 780, 30), lod + lodFloor, t = "l", lwd = 2, lty = 1 + (diet == "CD"))
   }
   legend("topleft", c("B", "D"), col = c("black", "chocolate"), lwd = 2, bty = "n")
-  legend("topright", c("CD", "HF"), pch = c(17, 16), lty = c(2, 1), lwd = 2, bty = "n")
+  legend("topright", c("CD", "HF"), pch = c(17, 16), bty = "n")
+  legend(20, -20, c("CD", "HF"), lty = c(2, 1), lwd = 2, bty = "n", horiz = TRUE, xjust = 0, yjust = 0)
+
   dev.off()
 }
 
