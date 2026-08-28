@@ -16,6 +16,9 @@ lods <- lapply(lodfiles, read.table, sep = "\t", header = TRUE, check.names = FA
 lods <- lapply(lods, function(z){ rownames(z) <- z[, "Locus"]; z })
 lodFloor <- -28
 
+lods.main <- read.table("output/main_ind_Progressive.txt", sep = "\t", header = TRUE, check.names = FALSE)
+rownames(lods.main) <- lods.main[, "Locus"]
+
 std <- function(x) sd(x)/sqrt(length(x))
 
 for(x in 1:nrow(mdata)){
@@ -31,7 +34,7 @@ for(x in 1:nrow(mdata)){
   axis(2, at = seq(-20, 20, 1), rep("", 41), tcl = -0.25)
   axis(2, at = seq(-20, 20, 5), seq(-20, 20, 5), las = 2)
   abline(h = -20, col = "gray")
-  abline(h = lodFloor + 3, lty = 2, col = "gray")
+  abline(h = lodFloor + c(1.9, 3.3), lty = 2, col = c("orange", "green"))
   axis(4, at = lodFloor + seq(0, 8, 2), seq(0, 8, 2), las = 2)
   mtext("LOD", side = 4, line = 2, at = lodFloor + 4)
   for(diet in c("CD", "HF")) {
@@ -62,7 +65,7 @@ for(x in 1:nrow(mdata)){
       adj <- residuals(null, na.action=na.exclude) + mean(Y)
 
       gts <- as.numeric(factor(as.character(geno[ii, strains]), levels = c("B", "H", "D"))) - 2
-      cat(ii, " ", timepoint, " ", diet, " ", length(adj), "==", length(gts), "\n")
+      #cat(ii, " ", timepoint, " ", diet, " ", length(adj), "==", length(gts), "\n")
       Bmean <- c(Bmean, -(mean(Y) - mean(adj[which(gts == -1)])))
       Bstd <- c(Bstd, std(adj[which(gts == -1)]))
       Dmean <- c(Dmean, -(mean(Y) - mean(adj[which(gts == 1)])))
@@ -79,11 +82,13 @@ for(x in 1:nrow(mdata)){
     points(seq(20, 780, 30), Dmean, t = "b", col = "chocolate", pch = 15+which(c("HF", "CD", "NAM") == diet))
 
     lod <- as.numeric(lods[[diet]][ii, as.character(seq(20, 780, 30))])
-    points(seq(20, 780, 30), lod + lodFloor, t = "l", lwd = 2, lty = 1 + (diet == "CD"))
+    points(seq(20, 780, 30), lod + lodFloor, t = "l", lwd = 2, col = c("red", "blue")[1 + (diet == "CD")])
   }
+  lodm <- as.numeric(lods.main[ii, as.character(seq(20, 780, 30))])
+  points(seq(20, 780, 30), lodm + lodFloor, t = "l", lwd = 2, col = "purple")
   legend("topleft", c("B", "D"), col = c("black", "chocolate"), lwd = 2, bty = "n")
   legend("topright", c("CD", "HF"), pch = c(17, 16), bty = "n")
-  legend(20, -20, c("CD", "HF"), lty = c(2, 1), lwd = 2, bty = "n", horiz = TRUE, xjust = 0, yjust = 0)
+  legend(20, -20, c("CD", "HF", "main"), lty = c(1, 1, 1), lwd = 2, col = c("blue", "red", "purple"), bty = "n", horiz = TRUE, xjust = 0, yjust = 0)
 
   dev.off()
 }
