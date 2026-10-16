@@ -33,11 +33,9 @@ for(d in c("CD", "HF")){
   AgeAtSetUp <- as.factor(cut(as.numeric(ldata[ids, "AgeAtSetUp.in.colony..days."]), seq(0, 1000, 180))) ### Threshold for less extreme
   for(z in TPStodo){
     Y <- BWs[ids, z]
-    tryCatch(
-    {
-      m <- lm(Y ~ vivarium + AgeAtSetUp, na.action = na.exclude)
-      BWsAdj[ids, z] <- round(as.numeric(residuals(m) + mean(Y, na.rm = TRUE)))
-    }, error = function(msg){ })
+    fm <- if(nlevels(droplevels(AgeAtSetUp[!is.na(Y)])) > 1) Y ~ vivarium + AgeAtSetUp else Y ~ vivarium
+    m <- lm(fm, na.action = na.exclude)
+    BWsAdj[ids, z] <- round(as.numeric(residuals(m) + mean(Y, na.rm = TRUE)))
     cat("Done", d, z, "\n")
   }
 }
