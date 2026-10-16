@@ -16,10 +16,10 @@ BWs <- read.table("output/bodyweightInterpolatedData.txt", sep = "\t", quote = "
 
 source("adjust.R")
 
+dir.create("output/CTL", showWarnings = FALSE, recursive = TRUE)
 
 ### CTL based on strain means first (at timepoints where we have (2 x 30) ~ 60 strains available)
-##
-for(diet in c("HF")) {
+for(diet in c("CD", "HF")) {
   ourTPS <- seq(20, 780, 30)
   TPStodo <- colnames(BWsAdj)[24:751][which(colnames(BWsAdj)[24:751] %in% as.character(ourTPS))]
   mCTL <- vector("list", length(TPStodo))
@@ -27,7 +27,7 @@ for(diet in c("HF")) {
   mCTLN <- vector("list", length(TPStodo))
   names(mCTLN) <- TPStodo
 
-  for(tp in TPStodo[14:16]) {
+  for(tp in TPStodo) {
     iix <- which(ldata[, "AgeAtSetUp.in.colony..days."] <= as.numeric(tp) & 
                  ldata[, "AgeAtDeath..days."] >= as.numeric(tp) & 
                  grepl("BXD", ldata[, "StrainName"]) &
@@ -84,12 +84,9 @@ for(diet in c("HF")) {
     rownames(ctlTPN) <- mymarkers
     mCTL[[tp]] <- ctlTP
     mCTLN[[tp]] <- ctlTPN
+    write.table(ctlTP, file = paste0("output/CTL/", diet, "_Wcor", tp, ".txt"), sep = "\t", quote = FALSE)
+    write.table(ctlTPN, file = paste0("output/CTL/", diet, "_Wn", tp, ".txt"), sep = "\t", quote = FALSE)
   }
-}
-
-for(x in 1:length(mCTL)){
-  write.table(mCTL[[x]], file = paste0("output/CTL/CD_X_Wcor", names(mCTL)[x], ".txt"), sep = "\t", quote = FALSE)
-  write.table(mCTLN[[x]], file = paste0("output/CTL/CD_X_Wn", names(mCTLN)[x], ".txt"), sep = "\t", quote = FALSE)
 }
 
 tp <- 5
@@ -122,8 +119,8 @@ points(CDn[,2], CDw[,2])
 nHs <- c()
 nCs <- c()
 for(tp in TPStodo){
-  INDs1 <- read.table(paste0("output/CTL/HF_n",tp,".txt"))
-  INDs2 <- read.table(paste0("output/CTL/CD_n",tp,".txt"))
+  INDs1 <- read.table(paste0("output/CTL/HF_Wn",tp,".txt"))
+  INDs2 <- read.table(paste0("output/CTL/CD_Wn",tp,".txt"))
   nHs <- c(nHs, mean(INDs1[,1] + INDs1[,2]))
   nCs <- c(nCs, mean(INDs2[,1] + INDs2[,2]))
 }
@@ -135,8 +132,8 @@ pVals <- matrix(NA, dim(map), length(TPStodo))
 rownames(pVals) <- rownames(map)
 colnames(pVals) <- TPStodo
 for(tp in TPStodo){
-  COR <- read.table(paste0("output/CTL/CD_cor",tp,".txt"))
-  INDs <- read.table(paste0("output/CTL/CD_n",tp,".txt"))
+  COR <- read.table(paste0("output/CTL/CD_Wcor",tp,".txt"))
+  INDs <- read.table(paste0("output/CTL/CD_Wn",tp,".txt"))
   pC <- c()
   for(x in 1:nrow(COR)){
     cor <- COR[x,]

@@ -17,7 +17,7 @@ bdata <- bdata[grep("^BXD", bdata[, "StrainName"]),]
 plot(c(0, 1200), c(0, 120), t = "n")
 alltps <- c()
 good <- c()
-for(x in sample(rownames(bdata))) {
+for(x in rownames(bdata)) {
   tps <- c("AgeAtSetUp", colnames(bdata)[grep("AgeAtWeight", colnames(bdata))])
   tp <- as.numeric(bdata[x,tps])
   wps <- colnames(bdata)[grep("^Weight", colnames(bdata))]

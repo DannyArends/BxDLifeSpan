@@ -27,40 +27,18 @@ BWsAdj <- matrix(NA, nrow(BWs), ncol(BWs), dimnames=list(rownames(BWs), colnames
 ourTPS <- seq(20, 780, 30)
 TPStodo <- colnames(BWs)[24:751][which(colnames(BWs)[24:751] %in% as.character(ourTPS))]
 
-for(z in TPStodo){
-  ii <- which(ldata[rownames(BWs),"Diet"] == "CD")
-  vivarium <- ldata[ii,"vivarium"]
-  AgeAtSetUp <- ldata[ii, "AgeAtSetUp.in.colony..days."]
-  AgeAtSetUp <- as.factor(cut(as.numeric(AgeAtSetUp), seq(0, 1000, 180))) ### Threshold for less extreme
-  Y <- BWs[ii, z]
-  tryCatch(
-  {
-    m <- lm(Y ~ vivarium + AgeAtSetUp, na.action = na.exclude)
-    i <- 1
-    for(x in ii){
-      BWsAdj[x, z] <- round(as.numeric(residuals(m) + mean(Y,na.rm = TRUE))[i])
-      i <- i+1
-    }
-  }, error = function(msg){ })
-  cat("Done",z,"\n")
+for(d in c("CD", "HF")){
+  ids <- rownames(BWs)[which(ldata[rownames(BWs), "Diet"] == d)]
+  vivarium <- ldata[ids, "vivarium"]
+  AgeAtSetUp <- as.factor(cut(as.numeric(ldata[ids, "AgeAtSetUp.in.colony..days."]), seq(0, 1000, 180))) ### Threshold for less extreme
+  for(z in TPStodo){
+    Y <- BWs[ids, z]
+    tryCatch(
+    {
+      m <- lm(Y ~ vivarium + AgeAtSetUp, na.action = na.exclude)
+      BWsAdj[ids, z] <- round(as.numeric(residuals(m) + mean(Y, na.rm = TRUE)))
+    }, error = function(msg){ })
+    cat("Done", d, z, "\n")
+  }
 }
-
-for(z in TPStodo){
-  ii <- which(ldata[rownames(BWs),"Diet"] == "HF")
-  vivarium <- ldata[ii,"vivarium"]
-  AgeAtSetUp <- ldata[ii, "AgeAtSetUp.in.colony..days."]
-  AgeAtSetUp <- as.factor(cut(as.numeric(AgeAtSetUp), seq(0, 1000, 180))) ### Threshold for less extreme
-  Y <- BWs[ii, z]
-  tryCatch(
-  {
-    m <- lm(Y ~ vivarium + AgeAtSetUp, na.action = na.exclude)
-    i <- 1
-    for(x in ii){
-      BWsAdj[x, z] <- round(as.numeric(residuals(m) + mean(Y,na.rm = TRUE))[i])
-      i <- i+1
-    }
-  }, error = function(msg){ })
-  cat("Done",z,"\n")
-}
-
 
