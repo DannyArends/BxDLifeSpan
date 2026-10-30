@@ -18,6 +18,7 @@ bdata <- rbind(bdata, nbdata[, colnames(bdata)])
 
 # Add the NAM data to the lifespan data
 ldata <- rbind(ldata, ndata[, colnames(ldata)])
+ldata[, "AgeAtSetUp.in.colony..days."] <- as.numeric(ldata[, "AgeAtSetUp.in.colony..days."])
 
 ### One eartag is found attached to two different mice
 eartag <- names(which(table(bdata[,1]) > 1))

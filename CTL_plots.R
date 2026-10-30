@@ -8,9 +8,8 @@
 library(RColorBrewer)
 source("shared.R")
 
-res.main <- -log10(read.table("output/CTL_CD_Pmatrix.txt", sep = "\t"))
-res.int <- -log10(read.table("output/CTL_HF_Pmatrix.txt", sep = "\t"))
-
+res.main <- read.table("output/CTL_CD_LODmatrix.txt", sep = "\t")
+res.int <- read.table("output/CTL_HF_LODmatrix.txt", sep = "\t")
 
 map[, "Mb"] <- 1e6 * map[, "Mb"]
 
@@ -24,8 +23,8 @@ threshold <- 1
 
 #colz.c <- c("white", "gray", brewer.pal(9, "Greens")[-c(1:6)])
 
-#colz.c <- c("white", "gray", "blue", "green", "red")
-colz.c <- c("white", "#abd9e9", "#fdb863", "#e66101", "#d01c8b", "#5e3c99")
+colz.c <- c("white", "#fceea7", "#fdb863", "#e66101", "#d01c8b", "#c42e2f")
+colz.n <- c("white", "#c6dbef", "#6baed6", "#3182bd", "#08519c", "#08306b")
 
 thresholds <- c(0, 1, 2, 3, 4, 5, 100)
 
@@ -48,21 +47,21 @@ pdf(paste0("output/actuaryCTL_lifespan.pdf"), width = 24, height = 11)
     rr.pos <- map[rr, "Mb"] + chr.s
     
     for(tp in 1:nrow(lods.c.All)){
-      ii <- which(lods.c.All[tp,rr] > threshold)
+      ii <- which(abs(lods.c.All[tp,rr]) > threshold)
       for(i in ii){
         if(i == 1){ x.s <- chr.s; }else{ x.s <- (rr.pos[i] + rr.pos[i-1])/2; }
         if(i == length(rr)){ x.e <- chr.s + chrs.length[chr]; }else{ x.e <- (rr.pos[i] + rr.pos[i+1])/2; }
         lod <- as.numeric(lods.c.All[tp,rr][i])
         #cat(x.s," ",  x.e, " ", lod, "\n")
-        cN <- max(which(thresholds < lod))
-        rect(x.s, tp+0, x.e, tp+1, col = colz.c[cN], border = NA)
+        cN <- max(which(thresholds < abs(lod)))
+        rect(x.s, tp+0, x.e, tp+1, col = (if(lod < 0) colz.n else colz.c)[cN], border = NA)
       }
     }
     chr.pe <- chr.s + chrs.length[chr]
     chr.s <- chr.s + chrs.length[chr] + gap
   }
   axis(2, at = 0.5 + 1:nrow(lods.c.All), gsub("X", "", rownames(lods.c.All)), las=2)
-  legend("topright", fill = c(colz.c), c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"), bg = "white", title = "-log10P")
+  legend("topright", fill = c(colz.c, colz.n), c(paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5")), paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"))), ncol = 2, bg = "white", title = "-log10P")
 
   lods.c.All <- t(res.int)
   plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "CTL HFD")
@@ -81,21 +80,21 @@ pdf(paste0("output/actuaryCTL_lifespan.pdf"), width = 24, height = 11)
     rr.pos <- map[rr, "Mb"] + chr.s
     
     for(tp in 1:nrow(lods.c.All)){
-      ii <- which(lods.c.All[tp,rr] > threshold)
+      ii <- which(abs(lods.c.All[tp,rr]) > threshold)
       for(i in ii){
         if(i == 1){ x.s <- chr.s; }else{ x.s <- (rr.pos[i] + rr.pos[i-1])/2; }
         if(i == length(rr)){ x.e <- chr.s + chrs.length[chr]; }else{ x.e <- (rr.pos[i] + rr.pos[i+1])/2; }
         lod <- as.numeric(lods.c.All[tp,rr][i])
         #cat(x.s," ",  x.e, " ", lod, "\n")
-        cN <- max(which(thresholds < lod))
-        rect(x.s, tp+0, x.e, tp+1, col = colz.c[cN], border = NA)
+        cN <- max(which(thresholds < abs(lod)))
+        rect(x.s, tp+0, x.e, tp+1, col = (if(lod < 0) colz.n else colz.c)[cN], border = NA)
       }
     }
     chr.pe <- chr.s + chrs.length[chr]
     chr.s <- chr.s + chrs.length[chr] + gap
   }
   axis(2, at = 0.5 + 1:nrow(lods.c.All), gsub("X", "", rownames(lods.c.All)), las=2)
-  legend("topright", fill = c(colz.c), c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"), bg = "white", title = "-log10P")
+  legend("topright", fill = c(colz.c, colz.n), c(paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5")), paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"))), ncol = 2, bg = "white", title = "-log10P")
 
 dev.off()
 

@@ -16,6 +16,10 @@ BWs <- read.table("output/bodyweightInterpolatedData.txt", sep = "\t", quote = "
 
 source("adjust.R")
 
+plot(colnames(BWs), apply(BWs,2,function(x){sum(!is.na(x))}))
+points(colnames(BWsAdj), apply(BWsAdj,2,function(x){sum(!is.na(x))}), col = "blue", pch=19)
+
+
 dir.create("output/CTL", showWarnings = FALSE, recursive = TRUE)
 
 ### CTL based on strain means first (at timepoints where we have (2 x 30) ~ 60 strains available)
@@ -89,75 +93,34 @@ for(diet in c("CD", "HF")) {
   }
 }
 
-tp <- 5
+for(diet in c("CD", "HF")){
+  pVals <- matrix(NA, nrow(map), length(TPStodo), dimnames = list(rownames(map), TPStodo))
+  for(tp in TPStodo){
+    COR <- read.table(paste0("output/CTL/", diet, "_Wcor", tp, ".txt"))
+    INDs <- read.table(paste0("output/CTL/", diet, "_Wn", tp, ".txt"))
+    for(x in 1:nrow(COR)){
+      cor <- COR[x,]
+      z <- .5*log((1.0 + cor)/(1.0 - cor))
+      n <- INDs[x,]
+      df <- n-(length(cor)-1)
+      sumOfSq <- sum(df * z^2)
+      sqOfSum <- sum(df * z)
+      denom <- sum(df)
+      Cv <- sumOfSq - (sqOfSum^2/ denom)
 
-op <- par(mfrow=c(2,1))
-plot(c(0, nrow(mCTL[[tp]])), c(-1, 1), t = "n", main = "170Days")
-abline(h = cc)
-points(mCTL[[tp]][,1], t = "l", col = "gray")
-points(mCTL[[tp]][,2], t = "l", col = "red")
-legend("topleft", c("B", "D"), lty=1, col = c("gray", "red"))
-
-plot(c(0, nrow(mCTLN[[tp]])), c(0, 500), t = "n", main = "170Days")
-abline(h = cc)
-points(mCTLN[[tp]][,1], t = "l", col = "gray")
-points(mCTLN[[tp]][,2], t = "l", col = "red")
-legend("topleft", c("B", "D"), lty=1, col = c("gray", "red"))
-
-
-
-CDn <- read.table("output/CTL/CD_cor170.txt")
-CDw <- read.table("output/CTL/CD_Wcor170.txt")
-
-op <- par(mfrow = c(1,2))
-plot(c(-0.7, 0.3), c(-0.7, 0.3), t = "n", xlab = "No strain", ylab = "Weighted strain", main = "B - allele carriers")
-points(CDn[,1], CDw[,1])
-plot(c(-0.7, 0.3), c(-0.7, 0.3), t = "n", xlab = "No strain", ylab = "Weighted strain", main = "D - allele carriers")
-points(CDn[,2], CDw[,2])
-
-
-nHs <- c()
-nCs <- c()
-for(tp in TPStodo){
-  INDs1 <- read.table(paste0("output/CTL/HF_Wn",tp,".txt"))
-  INDs2 <- read.table(paste0("output/CTL/CD_Wn",tp,".txt"))
-  nHs <- c(nHs, mean(INDs1[,1] + INDs1[,2]))
-  nCs <- c(nCs, mean(INDs2[,1] + INDs2[,2]))
-}
-
-plot(x = as.numeric(TPStodo), y = nHs, col = "blue", pch = 19)
-points(x = as.numeric(TPStodo), y = nCs, col = "green", pch = 19)
-
-pVals <- matrix(NA, dim(map), length(TPStodo))
-rownames(pVals) <- rownames(map)
-colnames(pVals) <- TPStodo
-for(tp in TPStodo){
-  COR <- read.table(paste0("output/CTL/CD_Wcor",tp,".txt"))
-  INDs <- read.table(paste0("output/CTL/CD_Wn",tp,".txt"))
-  pC <- c()
-  for(x in 1:nrow(COR)){
-    cor <- COR[x,]
-    z <- .5*log((1.0 + cor)/(1.0 - cor))
-    n <- INDs[x,]
-    df <- n-(length(cor)-1)
-    sumOfSq <- sum(df * z^2)
-    sqOfSum <- sum(df * z)
-    denom <- sum(df)
-    Cv <- sumOfSq - (sqOfSum^2/ denom)
-
-    pVals[rownames(map)[as.numeric(rownames(COR)[x])], tp] <- pchisq(Cv, 1, 0, FALSE)
-    #cat(x, " ", as.numeric(cor[1]), " ", as.numeric(cor[2])," ",  Cv, "\n")
+      pVals[rownames(map)[as.numeric(rownames(COR)[x])], as.character(tp)] <- sign(COR[x, 2] - COR[x, 1]) * -log10(pchisq(Cv, 1, 0, FALSE))
+    }
+    cat(diet, " ", tp, "\n")
   }
+  write.table(round(pVals,2), paste0("output/CTL_", diet, "_LODmatrix.txt"), sep = "\t", quote = FALSE)
 }
 
-write.table(pVals, "output/CTL_CD_Pmatrix.txt", sep = "\t", quote=FALSE)
-
-pVals <- read.table("output/CTL_HF_Pmatrix.txt", sep = "\t")
-
-### TODO: Look at correlation plots at a marker TP = 440, versus TP=470, where 440 shows no significance, 470 shows high significance
-### Investigate the " BREAK "
-
-image(-log10(apply(pVals,2,as.numeric)), breaks = c(0,1,2,3,4,5,6,10), 
-      col = c("white", "#E1E1E1", "#D0D0D0", "#00C0C0","#00B0B0","#00A0A0","#900000"), xaxt="n", yaxt = "n")
-axis(2, at = (1:25 - 0.5) / 25, seq(50, 780, 30), las = 2)
+for(diet in c("CD", "HF")){
+  nMat <- matrix(NA, nrow(map), length(TPStodo), dimnames = list(rownames(map), TPStodo))
+  for(tp in TPStodo){
+    INDs <- read.table(paste0("output/CTL/", diet, "_Wn", tp, ".txt"))
+    nMat[as.numeric(rownames(INDs)), tp] <- paste(INDs[, 2], INDs[, 1], sep = ",")
+  }
+  write.table(nMat, paste0("output/CTL_", diet, "_Nmatrix.txt"), sep = "\t", quote = FALSE)
+}
 

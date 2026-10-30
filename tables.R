@@ -10,8 +10,8 @@ wMeans.CD <- read.table("output/CD_wMeans_Progressive.txt", sep = "\t")
 wMeans.HF <- read.table("output/HF_wMeans_Progressive.txt", sep = "\t")
 pMap.main <- read.table("output/main_ind_Progressive.txt", sep = "\t")
 pMap.int <- read.table("output/int_ind_Progressive.txt", sep = "\t")
-CTL.CD <- -log10(read.table("output/CTL_CD_Pmatrix.txt", sep = "\t"))
-CTL.HF <- -log10(read.table("output/CTL_HF_Pmatrix.txt", sep = "\t"))
+CTL.CD <- read.table("output/CTL_CD_Pmatrix.txt", sep = "\t")
+CTL.HF <- read.table("output/CTL_HF_Pmatrix.txt", sep = "\t")
 
 mA3 <- sort(unique(as.numeric(unlist(apply(wMeans.CD[, -c(1:4)], 2, function(x){ which(x > 3) })))))
 
