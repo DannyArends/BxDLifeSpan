@@ -5,6 +5,9 @@
 #
 # Vivarium - https://genenetwork.org/show_trait?trait_id=10013&dataset=BXD-LongevityPublish
 
+### TODO: polarize the Lifespan mapping as well as the actuarial plot of it use the CTL colors
+### -log10P, polarize by High D = + , High B = -
+
 library(lme4)
 library(parallel)
 

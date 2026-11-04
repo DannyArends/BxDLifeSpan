@@ -6,6 +6,9 @@
 # Weight00.Baseline ~~ AgeAtSetUp
 
 
+### TODO: polarize the BW mapping as well as the actuarial plot
+### -log10P, polarize by High D = + , High B = -
+
 library(lme4)
 library(parallel)
 

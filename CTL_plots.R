@@ -31,7 +31,7 @@ thresholds <- c(0, 1, 2, 3, 4, 5, 100)
 pdf(paste0("output/actuaryCTL_lifespan.pdf"), width = 24, height = 11)
   lods.c.All <- t(res.main)
   op <- par(mfrow=c(2,1))
-  plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "CTL CD")
+  plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', xlab = "Mb", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "CTL CD")
   abline(h = 1:nrow(lods.c.All), col = rgb(0.5,0.5,0.5))
   chr.s <- 0
   chr.pe <- 0
@@ -39,7 +39,8 @@ pdf(paste0("output/actuaryCTL_lifespan.pdf"), width = 24, height = 11)
   for(chr in chrs){
     rect(chr.s, 0, chr.s + chrs.length[chr], 1+nrow(lods.c.All), col = c(rgb(1,1,1,0.5), rgb(1,1,1,0.5))[1 + (c.i %% 2)], border=NA);
     c.i <- c.i + 1;
-    axis(1, at = chr.s + chrs.length[chr] / 2, chr)
+    axis(1, at = chr.s + seq(0, chrs.length[chr], 50e6), labels = seq(0, chrs.length[chr], 50e6) / 1e6, cex.axis = 0.4, mgp = c(3, 0.2, 0))
+    mtext(chr, side = 1, line = 2, at = chr.s + chrs.length[chr] / 2)
     rect(chr.pe, 0, chr.s, 1+nrow(lods.c.All), col = "white", border=NA)
     abline(v = chr.s)
     abline(v = chr.s + chrs.length[chr])
@@ -60,11 +61,15 @@ pdf(paste0("output/actuaryCTL_lifespan.pdf"), width = 24, height = 11)
     chr.pe <- chr.s + chrs.length[chr]
     chr.s <- chr.s + chrs.length[chr] + gap
   }
+    abline(v = chr.s)
+    abline(v = chr.s + chrs.length[chr])
   axis(2, at = 0.5 + 1:nrow(lods.c.All), gsub("X", "", rownames(lods.c.All)), las=2)
-  legend("topright", fill = c(colz.c, colz.n), c(paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5")), paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"))), ncol = 2, bg = "white", title = "-log10P")
+  legend("topright", fill = c(colz.c, colz.n), c(paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5")), 
+                                                 paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"))), ncol = 2, bg = "white", title = "-log10P")
+  box()
 
   lods.c.All <- t(res.int)
-  plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "CTL HFD")
+  plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', xlab = "Mb", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "CTL HFD")
   abline(h = 1:nrow(lods.c.All), col = rgb(0.5,0.5,0.5))
   chr.s <- 0
   chr.pe <- 0
@@ -72,7 +77,8 @@ pdf(paste0("output/actuaryCTL_lifespan.pdf"), width = 24, height = 11)
   for(chr in chrs){
     rect(chr.s, 0, chr.s + chrs.length[chr], 1+nrow(lods.c.All), col = c(rgb(1,1,1,0.5), rgb(1,1,1,0.5))[1 + (c.i %% 2)], border=NA);
     c.i <- c.i + 1;
-    axis(1, at = chr.s + chrs.length[chr] / 2, chr)
+    axis(1, at = chr.s + seq(0, chrs.length[chr], 50e6), labels = seq(0, chrs.length[chr], 50e6) / 1e6, cex.axis = 0.4, mgp = c(3, 0.2, 0))
+    mtext(chr, side = 1, line = 2, at = chr.s + chrs.length[chr] / 2)
     rect(chr.pe, 0, chr.s, 1+nrow(lods.c.All), col = "white", border=NA)
     abline(v = chr.s)
     abline(v = chr.s + chrs.length[chr])
@@ -93,9 +99,12 @@ pdf(paste0("output/actuaryCTL_lifespan.pdf"), width = 24, height = 11)
     chr.pe <- chr.s + chrs.length[chr]
     chr.s <- chr.s + chrs.length[chr] + gap
   }
+    abline(v = chr.s)
+    abline(v = chr.s + chrs.length[chr])
   axis(2, at = 0.5 + 1:nrow(lods.c.All), gsub("X", "", rownames(lods.c.All)), las=2)
-  legend("topright", fill = c(colz.c, colz.n), c(paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5")), paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"))), ncol = 2, bg = "white", title = "-log10P")
-
+  legend("topright", fill = c(colz.c, colz.n), c(paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5")), 
+                                                 paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"))), ncol = 2, bg = "white", title = "-log10P")
+box()
 dev.off()
 
 
@@ -121,7 +130,7 @@ lods.cI <- t(res.int)
 
 for(x in (1:nrow(lods.cM))){
   pdf(paste0("output/lifespan_D",gsub("X", "", rownames(lods.cM)[x]),".pdf"), width = 24, height = 12)
-  plot(x = c(0, cp), y = c(-5, 5), t = "n", xaxt = "n", xlab = "Chromosome", ylab = "", 
+  plot(x = c(0, cp), y = c(-5, 5), t = "n", xaxt = "n", xlab = "Mb", ylab = "",
        main = gsub("X", "T > ", rownames(lods.cM)[x]))
   yo <- 0 #24*off
   abline(h = yo + 2, lty = 2, col = "black")
@@ -154,7 +163,10 @@ for(x in (1:nrow(lods.cM))){
     i <- i + 1
   }
   abline(h = yo, lty = 2)
-  axis(1, at = chr.mids,  c(1:19, "X"))
+  for(chr in c(1:19, "X")){
+    axis(1, at = chr.start[match(chr, c(1:19, "X"))] + seq(0, chrs.length[chr], 50e6), labels = seq(0, chrs.length[chr], 50e6) / 1e6, cex.axis = 0.6)
+  }
+  mtext(c(1:19, "X"), side = 1, line = 2, at = chr.mids)
   dev.off()
 }
 
