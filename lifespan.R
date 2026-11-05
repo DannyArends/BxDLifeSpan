@@ -46,11 +46,12 @@ for(diet in c("CD", "HF", "NAM")) {
   pvals <- c()
   for(x in c(1:nrow(geno))) {
       gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
-      pvals <- c(pvals, anova(lm(strainM ~ AgeAtSetUp + gts, weights = weights))[[5]][2])
+      fit <- lm(strainM ~ AgeAtSetUp + gts, weights = weights)
+      pvals <- c(pvals, sign(coef(fit)["gts"]) * -log10(anova(fit)[[5]][2]))
     if(x %% 1000 == 1) cat(x, "\n")
   }
-  write.table(cbind(map, -log10(pvals)), file = paste0("output/", diet, "_wMeans.txt"), sep = "\t", quote = FALSE)
-  plot(-log10(pvals), col = as.numeric(as.factor(map[, "Chr"])))
+  write.table(cbind(map, pvals), file = paste0("output/", diet, "_wMeans.txt"), sep = "\t", quote = FALSE)
+  plot(pvals, col = as.numeric(as.factor(map[, "Chr"])))
 }
 
 ### individual Level mapping (Random effects used to deal with correlation structure caused by multiple strain observations)
@@ -97,15 +98,15 @@ for(diet in c("CD", "HF", "NAM")){
         alt0 <- lmer(Y[-iix] ~ AgeAtSetUp[-iix] + (1 | strains[-iix]), REML = FALSE)
       }
       #alt0 <- lmer(Y[-iix] ~ (1 | strains[-iix]), REML = FALSE)
-      pvals <- c(pvals, as.numeric(na.omit(anova(alt0, full)[, "Pr(>Chisq)"])))
+      pvals <- c(pvals, sign(fixef(full)["gts"]) * -log10(as.numeric(na.omit(anova(alt0, full)[, "Pr(>Chisq)"]))))
     }else{
       ## No missing genotypes, so just use the global NULL model which has all data
-      pvals <- c(pvals, as.numeric(na.omit(anova(null, full)[, "Pr(>Chisq)"])))
+      pvals <- c(pvals, sign(fixef(full)["gts"]) * -log10(as.numeric(na.omit(anova(null, full)[, "Pr(>Chisq)"]))))
     }
     if(x %% 100 == 1) cat(x, "\n")
   }
-  write.table(cbind(map, -log10(pvals)), file = paste0("output/", diet, "_ind.txt"), sep = "\t", quote = FALSE)
-  plot(-log10(pvals), col = as.numeric(as.factor(map[, "Chr"])))
+  write.table(cbind(map, pvals), file = paste0("output/", diet, "_ind.txt"), sep = "\t", quote = FALSE)
+  plot(pvals, col = as.numeric(as.factor(map[, "Chr"])))
 }
 
 pvalsILM <- pvals
@@ -143,7 +144,8 @@ for(diet in c("CD", "HF")) {
     pvals <- c()
     for(x in c(1:nrow(geno))) {
       gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
-      pvals <- c(pvals, anova(lm(strainM ~ AgeAtSetUp + gts, weights = weights))[[5]][2])
+      fit <- lm(strainM ~ AgeAtSetUp + gts, weights = weights)
+      pvals <- c(pvals, sign(coef(fit)["gts"]) * -log10(anova(fit)[[5]][2]))
     }
     return(list(pvals, length(names(strainM))))
   })
@@ -155,17 +157,13 @@ for(diet in c("CD", "HF")) {
   for(x in 1:length(pvalsL)){ pvalM <- cbind(pvalM, pvalsL[[x]][[1]]) }
 
   op <- par(mfrow=c(2,1))
-  image(-log10(pvalM), breaks = c(0,1,2,3,4,5,6,10), 
+  image(abs(pvalM), breaks = c(0,1,2,3,4,5,6,10),
     col = c("white", "#E1E1E1", "#D0D0D0", "#00C0C0","#00B0B0","#00A0A0","#009090"), xaxt="n", yaxt = "n")
   #axis(2, at = (1:15 - 0.5) / 15, seq(30, 780, 30), las = 2)
 
-  res <- cbind(map, -log10(pvalM))
+  res <- cbind(map, pvalM)
   colnames(res) <- c("Chr","Locus","cM","Mb", seq(20, 780, 30))
   write.table(res, file = paste0("output/", diet, "_wMeans_Y_Progressive.txt"), sep = "\t", quote = FALSE)
   write.table(ns, file = paste0("output/", diet, "_wMeans_Y_Progressive_N.txt"), sep = "\t", quote = FALSE)
 }
-
-### Interactions together next Wednesday
-
-### Progressive Mapping, Weighted Strain means
 

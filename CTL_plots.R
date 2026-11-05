@@ -40,7 +40,7 @@ pdf(paste0("output/actuaryCTL_lifespan.pdf"), width = 24, height = 11)
     rect(chr.s, 0, chr.s + chrs.length[chr], 1+nrow(lods.c.All), col = c(rgb(1,1,1,0.5), rgb(1,1,1,0.5))[1 + (c.i %% 2)], border=NA);
     c.i <- c.i + 1;
     axis(1, at = chr.s + seq(0, chrs.length[chr], 50e6), labels = seq(0, chrs.length[chr], 50e6) / 1e6, cex.axis = 0.4, mgp = c(3, 0.2, 0))
-    mtext(chr, side = 1, line = 2, at = chr.s + chrs.length[chr] / 2)
+    mtext(chr, side = 1, line = 1.3, at = chr.s + chrs.length[chr] / 2)
     rect(chr.pe, 0, chr.s, 1+nrow(lods.c.All), col = "white", border=NA)
     abline(v = chr.s)
     abline(v = chr.s + chrs.length[chr])
@@ -78,7 +78,7 @@ pdf(paste0("output/actuaryCTL_lifespan.pdf"), width = 24, height = 11)
     rect(chr.s, 0, chr.s + chrs.length[chr], 1+nrow(lods.c.All), col = c(rgb(1,1,1,0.5), rgb(1,1,1,0.5))[1 + (c.i %% 2)], border=NA);
     c.i <- c.i + 1;
     axis(1, at = chr.s + seq(0, chrs.length[chr], 50e6), labels = seq(0, chrs.length[chr], 50e6) / 1e6, cex.axis = 0.4, mgp = c(3, 0.2, 0))
-    mtext(chr, side = 1, line = 2, at = chr.s + chrs.length[chr] / 2)
+    mtext(chr, side = 1, line = 1.3, at = chr.s + chrs.length[chr] / 2)
     rect(chr.pe, 0, chr.s, 1+nrow(lods.c.All), col = "white", border=NA)
     abline(v = chr.s)
     abline(v = chr.s + chrs.length[chr])

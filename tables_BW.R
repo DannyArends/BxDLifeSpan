@@ -9,9 +9,9 @@ source("shared.R")
 wMeans.CD <- read.table("output/BW_CD_wMeans_Progressive.txt", sep = "\t")
 wMeans.HF <- read.table("output/BW_HF_wMeans_Progressive.txt", sep = "\t")
 
-mA3 <- sort(unique(as.numeric(unlist(apply(wMeans.CD[, -c(1:4)], 2, function(x){ which(x > 3) })))))
+mA3 <- sort(unique(as.numeric(unlist(apply(wMeans.CD[, -c(1:4)], 2, function(x){ which(abs(x) > 3) })))))
 
-tpMax <- apply(wMeans.CD[mA3, -c(1:4)],1, which.max)
+tpMax <- apply(abs(wMeans.CD[mA3, -c(1:4)]), 1, which.max)
 
 cat("", file = "wMean.summary.CD.txt")
 for(i in 1:length(mA3)){

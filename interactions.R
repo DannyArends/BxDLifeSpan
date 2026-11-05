@@ -37,7 +37,7 @@ pvalsL <- parLapply(clust, seq(20, 780, 30), function(day){
 
   pvals.main <- c()
   pvals.int <- c()
-  for(x in c(1:10)){ #nrow(geno))) {
+  for(x in c(1:nrow(geno))) {
     gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
 
     fd <- data.frame(Y, strains, diet, AgeAtSetUp, vivarium, gts)
@@ -50,12 +50,12 @@ pvalsL <- parLapply(clust, seq(20, 780, 30), function(day){
       ## If we have missing genotypes, we need to account for this, specify an ALT model
       fd <- fd[-iix,]
       alt0 <- lmer(Y ~ diet + vivarium + AgeAtSetUp + (1 | strains), data = fd, REML = FALSE)
-      pvals.main <- c(pvals.main, as.numeric(na.omit(anova(alt0, full)[, "Pr(>Chisq)"])))
-      pvals.int <- c(pvals.int, as.numeric(na.omit(anova(full, full.int)[, "Pr(>Chisq)"])))
+      pvals.main <- c(pvals.main, sign(fixef(full)["gts"]) * -log10(as.numeric(na.omit(anova(alt0, full)[, "Pr(>Chisq)"]))))
+      pvals.int <- c(pvals.int, sign(fixef(full.int)["dietHF:gts"]) * -log10(as.numeric(na.omit(anova(full, full.int)[, "Pr(>Chisq)"]))))
     }else{
       ## No missing genotypes, so just use the global NULL model which has all data
-      pvals.main <- c(pvals.main, as.numeric(na.omit(anova(null, full)[, "Pr(>Chisq)"])))
-      pvals.int <- c(pvals.int, as.numeric(na.omit(anova(full, full.int)[, "Pr(>Chisq)"])))
+      pvals.main <- c(pvals.main, sign(fixef(full)["gts"]) * -log10(as.numeric(na.omit(anova(null, full)[, "Pr(>Chisq)"]))))
+      pvals.int <- c(pvals.int, sign(fixef(full.int)["dietHF:gts"]) * -log10(as.numeric(na.omit(anova(full, full.int)[, "Pr(>Chisq)"]))))
     }
     if(x %% 100 == 1) cat(x, "\n")
   }
@@ -72,10 +72,10 @@ for(x in 1:length(pvalsL)){
   nInd <- c(nInd, pvalsL[[x]][[2]])
 }
 
-res.main <- cbind(map, -log10(pvalM.main))
+res.main <- cbind(map, pvalM.main)
 colnames(res.main) <- c("Chr","Locus","cM","Mb", seq(20, 780, 30))
 
-res.int <- cbind(map, -log10(pvalM.int))
+res.int <- cbind(map, pvalM.int)
 colnames(res.int) <- c("Chr","Locus","cM","Mb", seq(20, 780, 30))
 
 write.table(nInd, file = paste0("output/N_ind_Progressive.txt"), sep = "\t", quote = FALSE)
@@ -83,14 +83,14 @@ write.table(res.main, file = paste0("output/main_ind_Progressive.txt"), sep = "\
 write.table(res.int, file = paste0("output/int_ind_Progressive.txt"), sep = "\t", quote = FALSE)
 
 op <- par(mfrow = c(2,1))
-image(-log10(pvalM.main), breaks = c(0,1,2.5,100), col = c("white", "#E1E1E1", "red"), xaxt="n", yaxt = "n")
-plot(-log10(pvalM.main[,1]), col = as.numeric(as.factor(map[, "Chr"])), xaxs="i")
+image(abs(pvalM.main), breaks = c(0,1,2.5,100), col = c("white", "#E1E1E1", "red"), xaxt="n", yaxt = "n")
+plot(pvalM.main[,1], col = as.numeric(as.factor(map[, "Chr"])), xaxs="i")
 
 op <- par(mfrow = c(2,1))
-image(-log10(pvalM.int), breaks = c(0,1,2.5,100), col = c("white", "#E1E1E1", "red"), xaxt="n", yaxt = "n")
-plot(-log10(pvalM.int[,1]), col = as.numeric(as.factor(map[, "Chr"])), xaxs="i")
+image(abs(pvalM.int), breaks = c(0,1,2.5,100), col = c("white", "#E1E1E1", "red"), xaxt="n", yaxt = "n")
+plot(pvalM.int[,1], col = as.numeric(as.factor(map[, "Chr"])), xaxs="i")
 
-image(-log10(pvalM.int[which(map[, "Chr"] == 1),]), breaks = c(0,1,2.5,100), col = c("white", "#E1E1E1", "red"), xaxt="n", yaxt = "n")
+image(abs(pvalM.int[which(map[, "Chr"] == 1),]), breaks = c(0,1,2.5,100), col = c("white", "#E1E1E1", "red"), xaxt="n", yaxt = "n")
 
 
 

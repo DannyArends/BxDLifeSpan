@@ -121,13 +121,14 @@ for(diet in c("CD", "HF", "NAM")) {
     pvals <- c()
     for(x in c(1:nrow(geno))) {
       gts <- as.numeric(factor(as.character(genoS[x, ]), levels = c("B", "H", "D"))) - 2
-      pvals <- c(pvals, anova(lm(strainM ~ gts, weights = weights))[[5]][1])
+      fit <- lm(strainM ~ gts, weights = weights)
+      pvals <- c(pvals, sign(coef(fit)["gts"]) * -log10(anova(fit)[[5]][1]))
       if(x %% 1000 == 1) cat(x, "\n")
     }
     #plot(-log10(pvals), col = as.numeric(as.factor(map[, "Chr"])), main = paste0(diet, "@", tp, ",n=", length(bxds)))
     pvalsM <- cbind(pvalsM, pvals)
   }
-  res <- cbind(map, -log10(pvalsM))
+  res <- cbind(map, pvalsM)
   colnames(res) <- c("Chr","Locus","cM","Mb", tpsA)
   write.table(res, file = paste0("output/BW_", diet, "_wMeans_Progressive.txt"), sep = "\t", quote = FALSE)
 }
@@ -153,7 +154,8 @@ l.x <- sum(chrs.length) + gap * (length(chrs)-1)
 
 threshold <- 1
 
-colz.c <- c("white", "#abd9e9", "#fdb863", "#e66101", "#d01c8b", "#5e3c99")
+colz.c <- c("white", "#fceea7", "#fdb863", "#e66101", "#d01c8b", "#c42e2f")
+colz.n <- c("white", "#c6dbef", "#6baed6", "#3182bd", "#08519c", "#08306b")
 
 thresholds <- c(0, 1, 2, 3, 4, 5, 100)
 
@@ -176,21 +178,22 @@ pdf(paste0("output/actuaryQTL_BW.pdf"), width = 24, height = 18)
     rr.pos <- map[rr, "Mb"] + chr.s
     
     for(tp in 1:nrow(lods.c.All)){
-      ii <- which(lods.c.All[tp,rr] > threshold)
+      ii <- which(abs(lods.c.All[tp,rr]) > threshold)
       for(i in ii){
         if(i == 1){ x.s <- chr.s; }else{ x.s <- (rr.pos[i] + rr.pos[i-1])/2; }
         if(i == length(rr)){ x.e <- chr.s + chrs.length[chr]; }else{ x.e <- (rr.pos[i] + rr.pos[i+1])/2; }
         lod <- as.numeric(lods.c.All[tp,rr][i])
         #cat(x.s," ",  x.e, " ", lod, "\n")
-        cN <- max(which(thresholds < lod))
-        rect(x.s, tp+0, x.e, tp+1, col = colz.c[cN], border = NA)
+        cN <- max(which(thresholds < abs(lod)))
+        rect(x.s, tp+0, x.e, tp+1, col = (if(lod < 0) colz.n else colz.c)[cN], border = NA)
       }
     }
     chr.pe <- chr.s + chrs.length[chr]
     chr.s <- chr.s + chrs.length[chr] + gap
   }
   axis(2, at = 0.5 + 1:nrow(lods.c.All), gsub("X", "", rownames(lods.c.All)), las=2)
-  legend("topright", fill = c(colz.c), c("0 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"), bg = "white", title = "-log10P")
+  legend("topright", fill = c(colz.c, colz.n), c(paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5")), 
+                                                 paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"))), ncol = 2, bg = "white", title = "-log10P")
 
   lods.c.All <- t(res.int)
   plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "BW HF")
@@ -207,23 +210,24 @@ pdf(paste0("output/actuaryQTL_BW.pdf"), width = 24, height = 18)
     abline(v = chr.s + chrs.length[chr])
     rr <- rownames(map)[which(map[, "Chr"] == chr)]
     rr.pos <- map[rr, "Mb"] + chr.s
-    
+
     for(tp in 1:nrow(lods.c.All)){
-      ii <- which(lods.c.All[tp,rr] > threshold)
+      ii <- which(abs(lods.c.All[tp,rr]) > threshold)
       for(i in ii){
         if(i == 1){ x.s <- chr.s; }else{ x.s <- (rr.pos[i] + rr.pos[i-1])/2; }
         if(i == length(rr)){ x.e <- chr.s + chrs.length[chr]; }else{ x.e <- (rr.pos[i] + rr.pos[i+1])/2; }
         lod <- as.numeric(lods.c.All[tp,rr][i])
         #cat(x.s," ",  x.e, " ", lod, "\n")
-        cN <- max(which(thresholds < lod))
-        rect(x.s, tp+0, x.e, tp+1, col = colz.c[cN], border = NA)
+        cN <- max(which(thresholds < abs(lod)))
+        rect(x.s, tp+0, x.e, tp+1, col = (if(lod < 0) colz.n else colz.c)[cN], border = NA)
       }
     }
     chr.pe <- chr.s + chrs.length[chr]
     chr.s <- chr.s + chrs.length[chr] + gap
   }
   axis(2, at = 0.5 + 1:nrow(lods.c.All), gsub("X", "", rownames(lods.c.All)), las=2)
-  legend("topright", fill = c(colz.c), c("0 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"), bg = "white", title = "-log10P")
+  legend("topright", fill = c(colz.c, colz.n), c(paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5")), 
+                                                 paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"))), ncol = 2, bg = "white", title = "-log10P")
 
 dev.off()
 
