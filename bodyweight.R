@@ -147,7 +147,7 @@ colz.c <- c("white", "gray", brewer.pal(9, "Greens")[-c(1:6)])
 map[, "Mb"] <- 1e6 * map[, "Mb"]
 
 chrs <- c(1:19, "X")
-gap <- 10000000
+gap <- 15000000
 chrs.length <- unlist(lapply(chrs, function(x){ max(map[map[, "Chr"] == x,"Mb"]) }))
 names(chrs.length) <- chrs
 l.x <- sum(chrs.length) + gap * (length(chrs)-1)
@@ -162,7 +162,7 @@ thresholds <- c(0, 1, 2, 3, 4, 5, 100)
 pdf(paste0("output/actuaryQTL_BW.pdf"), width = 24, height = 11)
   lods.c.All <- t(res.main)
   op <- par(mfrow=c(2,1))
-  plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "BW CD")
+  plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', bty = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "BW CD")
   abline(h = 1:nrow(lods.c.All), col = rgb(0.5,0.5,0.5))
   chr.s <- 0
   chr.pe <- 0
@@ -191,12 +191,14 @@ pdf(paste0("output/actuaryQTL_BW.pdf"), width = 24, height = 11)
     chr.pe <- chr.s + chrs.length[chr]
     chr.s <- chr.s + chrs.length[chr] + gap
   }
+  chr.x <- c(0, cumsum(chrs.length + gap))[1:length(chrs)]
+  rect(chr.x, 1, chr.x + chrs.length, 1 + nrow(lods.c.All), lwd = 2, xpd = NA)
   axis(2, at = 0.5 + 1:nrow(lods.c.All), gsub("X", "", rownames(lods.c.All)), las=2)
   legend("topright", fill = c(colz.c, colz.n), c(paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5")), 
                                                  paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"))), ncol = 2, bg = "white", title = "-log10P")
 
   lods.c.All <- t(res.int)
-  plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "BW HF")
+  plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', bty = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "BW HF")
   abline(h = 1:nrow(lods.c.All), col = rgb(0.5,0.5,0.5))
   chr.s <- 0
   chr.pe <- 0
@@ -225,6 +227,8 @@ pdf(paste0("output/actuaryQTL_BW.pdf"), width = 24, height = 11)
     chr.pe <- chr.s + chrs.length[chr]
     chr.s <- chr.s + chrs.length[chr] + gap
   }
+  chr.x <- c(0, cumsum(chrs.length + gap))[1:length(chrs)]
+  rect(chr.x, 1, chr.x + chrs.length, 1 + nrow(lods.c.All), lwd = 2, xpd = NA)
   axis(2, at = 0.5 + 1:nrow(lods.c.All), gsub("X", "", rownames(lods.c.All)), las=2)
   legend("topright", fill = c(colz.c, colz.n), c(paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5")), 
                                                  paste0(c("0 - 1", "1 - 2", "2 - 3", "3 - 4", "4 - 5", ">5"))), ncol = 2, bg = "white", title = "-log10P")
