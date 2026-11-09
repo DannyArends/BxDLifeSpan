@@ -2,11 +2,10 @@ library(RColorBrewer)
 source("shared.R")
 
 res.CD <- read.table("output/CD_wMeans_Progressive.txt", sep = "\t")
-res.CD <- res.CD[, -c(1:4)]
+res.CD <- byTPS(res.CD)
 
 res.HF <- read.table("output/HF_wMeans_Progressive.txt", sep = "\t")
-res.HF <- res.HF[, -c(1:4)]
-
+res.HF <- byTPS(res.HF)
 
 map[, "Mb"] <- 1e6 * map[, "Mb"]
 
@@ -22,7 +21,7 @@ colz.c <- c("white", "#abd9e9", "#fdb863", "#e66101", "#d01c8b", "#5e3c99")
 
 thresholds <- c(0, 1, 2, 3, 4, 5, 100)
 
-pdf(paste0("output/actuaryQTL_lifespan_CD_HF.pdf"), width = 24, height = 18)
+pdf(paste0("output/actuaryQTL_lifespan_CD_HF.pdf"), width = 24, height = 11)
   lods.c.All <- t(res.CD)
   op <- par(mfrow=c(2,1))
   plot(c(1, l.x), c(1, 1+ncol(res.CD)), t = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", 

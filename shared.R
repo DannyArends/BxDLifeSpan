@@ -1,6 +1,15 @@
 #
 # Shared.R - Code used to load and preprocess our data
 
+plotTPS <- seq(50, 770, 30)
+
+# Result matrix (markers x timepoints) on the shared plot timepoints, NA where a timepoint was not mapped
+byTPS <- function(res){
+  m <- sapply(paste0("X", plotTPS), function(tp){ if(tp %in% colnames(res)) res[, tp] else rep(NA, nrow(res)) })
+  rownames(m) <- rownames(res)
+  return(m)
+}
+
 #setwd("C:/Github/BxDLifespan/")
 ldata <- read.table("data/BxD_Lifespan.txt", sep = "\t", header = TRUE, row.names=2)
 bdata <- read.table("data/BxD_Bodyweights.txt", sep = "\t", header = TRUE)

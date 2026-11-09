@@ -136,9 +136,9 @@ for(diet in c("CD", "HF", "NAM")) {
 
 ### Plot (copy/pasted from the plots.R)
 res.main <- read.table("output/BW_CD_wMeans_Progressive.txt", sep = "\t")
-res.main <- res.main[, -c(1:4)]
+res.main <- byTPS(res.main)
 res.int <- read.table("output/BW_HF_wMeans_Progressive.txt", sep = "\t")
-res.int <- res.int[, -c(1:4)]
+res.int <- byTPS(res.int)
 
 library(RColorBrewer)
 threshold <- 2
@@ -159,7 +159,7 @@ colz.n <- c("white", "#c6dbef", "#6baed6", "#3182bd", "#08519c", "#08306b")
 
 thresholds <- c(0, 1, 2, 3, 4, 5, 100)
 
-pdf(paste0("output/actuaryQTL_BW.pdf"), width = 24, height = 18)
+pdf(paste0("output/actuaryQTL_BW.pdf"), width = 24, height = 11)
   lods.c.All <- t(res.main)
   op <- par(mfrow=c(2,1))
   plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "BW CD")

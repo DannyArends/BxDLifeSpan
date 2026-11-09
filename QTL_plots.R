@@ -9,11 +9,12 @@ library(RColorBrewer)
 source("shared.R")
 
 res.main <- read.table("output/CD_wMeans_Y_Progressive.txt", sep = "\t")
-res.main.N <- read.table("output/CD_wMeans_Y_Progressive_N.txt", sep = "\t")
-res.main <- res.main[, -c(1:4)]
+res.main.N <- read.table("output/CD_wMeans_Y_Progressive_N.txt", sep = "\t")[match(plotTPS, seq(20, 780, 30)), , drop = FALSE]
+res.main <- byTPS(res.main)
+
 res.int <- read.table("output/HF_wMeans_Y_Progressive.txt", sep = "\t")
-res.int.N <- read.table("output/HF_wMeans_Y_Progressive_N.txt", sep = "\t")
-res.int <- res.int[, -c(1:4)]
+res.int.N <- read.table("output/HF_wMeans_Y_Progressive_N.txt", sep = "\t")[match(plotTPS, seq(20, 780, 30)), , drop = FALSE]
+res.int <- byTPS(res.int)
 
 map[, "Mb"] <- 1e6 * map[, "Mb"]
 
@@ -33,7 +34,7 @@ colz.n <- c("white", "#c6dbef", "#6baed6", "#3182bd", "#08519c", "#08306b")
 
 thresholds <- c(0, 1, 2, 3, 4, 5, 100)
 
-pdf(paste0("output/actuaryQTL_lifespan_wMeans.pdf"), width = 24, height = 18)
+pdf(paste0("output/actuaryQTL_lifespan_wMeans.pdf"), width = 24, height = 11)
   lods.c.All <- t(res.main)
   op <- par(mfrow=c(2,1))
   plot(c(1, l.x), c(1, 1+ncol(res.main)), t = 'n', xlab = "", xaxt='n', ylab="", yaxt='n', xaxs="i", yaxs="i", main = "Lifespan CD")

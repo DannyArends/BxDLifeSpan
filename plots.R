@@ -9,10 +9,10 @@ library(RColorBrewer)
 source("shared.R")
 
 res.main <- read.table("output/main_ind_Progressive.txt", sep = "\t")
-res.main <- res.main[, -c(1:4)]
-res.int <- read.table("output/int_ind_Progressive.txt", sep = "\t")
-res.int <- res.int[, -c(1:4)]
+res.main <- byTPS(res.main)
 
+res.int <- read.table("output/int_ind_Progressive.txt", sep = "\t")
+res.int <- byTPS(res.int)
 
 map[, "Mb"] <- 1e6 * map[, "Mb"]
 
